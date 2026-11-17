@@ -105,9 +105,9 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .pic svg, .pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .pic.small { width: 100%; max-width: 160px; height: 84px; margin-bottom: 8px; }
 /* Compare header: photos are tall two-view shots, so lay them on their side to fill the wide box
-   (handle left, head right — same as the drawn SVG). */
+   (head left, handle right). */
 .pic.small:has(img) { container-type: size; }
-.pic.small img { flex: none; width: 100cqh; height: 100cqw; transform: rotate(90deg); }
+.pic.small img { flex: none; width: 100cqh; height: 100cqw; transform: rotate(-90deg); }
 .card .brand { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .card h3 { margin: 0; font-size: 1.05rem; }
 .specs { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 0.9rem; }

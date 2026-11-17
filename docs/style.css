@@ -117,8 +117,6 @@ tr.diff td { background: var(--diff); }
 .bar span { display: block; height: 100%; background: var(--bar); border-radius: 2px; }
 td.hi .bar span { background: var(--accent); }
 .remove { margin-left: 6px; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
-.source { font-size: 0.85rem; color: var(--accent); }
-.source:hover { text-decoration: underline; }
 
 /* Full-screen viewer */
 .zoom {

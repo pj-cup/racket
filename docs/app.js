@@ -85,7 +85,7 @@
       ? `<img src="${esc(r.image.replace(/w_600,h_600/, "w_1400,h_1400"))}" alt="${esc(r.brand + " " + r.model)}" data-id="${esc(r.id)}" referrerpolicy="no-referrer">`
       : racketImage(r, true);
     $("zoomTitle").innerHTML = `<span class="brand">${esc(r.brand)}</span>${esc(r.model)}`;
-    $("zoomMeta").innerHTML = `${esc(keySpecs)}${r.source ? ` · <a class="source" href="${esc(r.source)}" target="_blank" rel="noopener">Official page ↗</a>` : ""}`;
+    $("zoomMeta").innerHTML = `${esc(keySpecs)}`;
     $("zoom").showModal();
   }
 
@@ -126,7 +126,6 @@
       return `<article class="card${on ? " selected" : ""}">
         ${picBox(r, "")}
         <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3></div>
-        ${r.source ? `<a class="source" href="${esc(r.source)}" target="_blank" rel="noopener">Official page ↗</a>` : ""}
         <dl class="specs">${rows}</dl>
         <button class="btn ${on ? "on" : "ghost"}" data-id="${esc(r.id)}" ${!on && full ? "disabled title=\"Up to 4 rackets\"" : ""}>
           ${on ? "✓ Added to compare" : "+ Compare"}
@@ -157,7 +156,7 @@
     const rs = selected.map(id => byId.get(id));
     const diffOnly = $("diffOnly").checked;
     const head = `<thead><tr><th></th>${rs.map(r =>
-      `<th>${picBox(r, "small")}<span class="brand">${esc(r.brand)}</span>${esc(r.model)}${r.source ? ` <a class="source" href="${esc(r.source)}" target="_blank" rel="noopener" title="Official page">↗</a>` : ""}<button class="remove" data-remove="${esc(r.id)}" aria-label="Remove">×</button></th>`
+      `<th>${picBox(r, "small")}<span class="brand">${esc(r.brand)}</span>${esc(r.model)}<button class="remove" data-remove="${esc(r.id)}" aria-label="Remove">×</button></th>`
     ).join("")}</tr></thead>`;
 
     const body = FIELDS.map(f => {

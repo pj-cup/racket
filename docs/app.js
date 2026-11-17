@@ -95,13 +95,14 @@
   });
 
   function filtered() {
-    const q = $("q").value.trim().toLowerCase();
+    const words = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const brand = $("brand").value;
     const head = $("head").value;
     const sort = $("sort").value;
     let list = data.filter(r => {
       if (brand && r.brand !== brand) return false;
-      if (q && !`${r.brand} ${r.model}`.toLowerCase().includes(q)) return false;
+      const text = `${r.brand} ${r.model}`.toLowerCase();
+      if (!words.every(w => text.includes(w))) return false; // every word, any order
       if (head) {
         const [lo, hi] = head.split("-").map(Number);
         if (r.headSize < lo || r.headSize > hi) return false;
@@ -188,8 +189,12 @@
   // ---------- Routing (#compare=id1,id2 is shareable) ----------
   function readHash() {
     const m = location.hash.match(/^#compare=(.*)$/);
-    if (m) selected = m[1].split(",").map(decodeURIComponent).filter(id => byId.has(id)).slice(0, MAX);
+    if (m) selected = [...new Set(m[1].split(",").map(decodeURIComponent))].filter(id => byId.has(id)).slice(0, MAX);
     const showCompare = !!m && selected.length >= 2;
+    if (showCompare) { // rewrite the URL to what's actually shown (deduped, unknown ids dropped, max 4)
+      const canon = "#compare=" + selected.map(encodeURIComponent).join(",");
+      if (location.hash !== canon) history.replaceState(null, "", canon);
+    }
     $("compare").hidden = !showCompare;
     $("browse").hidden = showCompare;
     render();

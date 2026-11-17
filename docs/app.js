@@ -10,22 +10,38 @@
   const has = v => v !== null && v !== undefined;
   const fmtBalance = r => {
     if (!has(r.balance)) return NA;
-    const p = Math.round(balancePts(r));
-    return `${r.balance} cm (${p === 0 ? "even" : p > 0 ? p + " pts HL" : -p + " pts HH"})`;
+    return ptsLabel(Math.round(balancePts(r))); // the cm value is shown as `sub` in the compare table
   };
+  const pts = n => n + (n === 1 ? " pt" : " pts");
+  const ptsLabel = p => p === 0 ? "even" : p > 0 ? pts(p) + " HL" : pts(-p) + " HH";
 
+  // hint: one-line "what it means" shown in the compare table.
+  // delta(r, a): difference from racket A, as text (compare table only).
+  const signed = (d, unit) => (d > 0 ? "+" : "−") + Math.abs(+d.toFixed(1)) + unit;
   const FIELDS = [
-    { key: "headSize",  label: "Head size",  unit: " sq in", num: r => r.headSize },
-    { key: "weight",    label: "Weight",     unit: " g", num: r => r.weight },
-    { key: "balance",   label: "Balance",    fmt: fmtBalance, num: r => r.balance },
-    // Strung and unstrung swing weights differ by ~20–30, so bars only compare like with like.
-    { key: "swingweight", label: "Swing weight", fmt: r => has(r.swingweight) ? `${r.swingweight} (${r.swingweightType})` : NA,
-      num: r => r.swingweight, group: r => r.swingweightType },
-    { key: "stiffness", label: "Stiffness",  unit: " RA", num: r => r.stiffness },
-    { key: "pattern",   label: "String pattern" },
-    { key: "beam",      label: "Beam",       unit: " mm" },
-    { key: "length",    label: "Length",     unit: " in", num: r => r.length },
+    { key: "headSize",  label: "Head size",  unit: " sq in", num: r => r.headSize,
+      hint: "Bigger = more forgiving, less precise", delta: (r, a) => signed(r.headSize - a.headSize, " sq in") },
+    { key: "weight",    label: "Weight",     unit: " g", num: r => r.weight,
+      hint: "Unstrung. Heavier = more stable, more effort", delta: (r, a) => signed(r.weight - a.weight, " g") },
+    { key: "balance",   label: "Balance",    fmt: fmtBalance, num: r => balancePts(r), scale: v => ptsLabel(Math.round(v)),
+      sub: r => has(r.balance) ? `${r.balance.toFixed(1)} cm` : "",
+      hint: "Unstrung. More pts HL = quicker hands, less plow",
+      delta: (r, a) => { const d = Math.round(balancePts(r)) - Math.round(balancePts(a)); return d === 0 ? "" : `${pts(Math.abs(d))} ${d > 0 ? "more" : "less"} HL`; } },
+    // Every racket uses Tennis Warehouse strung swing weight, so they compare directly (group kept as a guard).
+    { key: "swingweight", label: "Swing weight", fmt: r => has(r.swingweight) ? `${r.swingweight}` : NA,
+      num: r => r.swingweight, group: r => r.swingweightType,
+      hint: "Strung. Higher = more power and stability, slower to swing", delta: (r, a) => signed(r.swingweight - a.swingweight, "") },
+    { key: "stiffness", label: "Stiffness",  unit: " RA", num: r => r.stiffness,
+      hint: "Higher = more power, less comfort", delta: (r, a) => signed(r.stiffness - a.stiffness, " RA") },
+    { key: "pattern",   label: "String pattern", hint: "Open (16x19) = more spin; dense (18x20) = more control" },
+    { key: "beam",      label: "Beam",       unit: " mm", hint: "Thicker = more power, less feel" },
+    { key: "length",    label: "Length",     unit: " in", num: r => r.length, delta: (r, a) => signed(r.length - a.length, " in") },
   ];
+  const TABLE_GROUPS = [
+    { name: "Feel",  keys: ["weight", "balance", "swingweight", "stiffness"] },
+    { name: "Frame", keys: ["headSize", "pattern", "beam", "length"] },
+  ];
+  const LETTERS = "ABCD";
   FIELDS.forEach(f => { if (!f.fmt) f.fmt = r => has(r[f.key]) ? `${r[f.key]}${f.unit || ""}` : NA; });
   const CARD_FIELDS = ["headSize", "weight", "balance", "swingweight", "stiffness", "pattern"];
 
@@ -44,9 +60,9 @@
   // Real photo if `image` is set, else an SVG drawn from specs: head scaled by head size,
   // string grid from the pattern, colors from `colors: [frame, grip]`.
   let svgSeq = 0;
-  function racketImage(r, drawOnly) {
+  function racketImage(r, drawOnly, eager) {
     if (r.image && !drawOnly) {
-      return `<img src="${esc(r.image)}" alt="${esc(r.brand + " " + r.model)}" data-id="${esc(r.id)}" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+      return `<img src="${esc(r.image)}" alt="${esc(r.brand + " " + r.model)}" data-id="${esc(r.id)}" loading="${eager ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">`;
     }
     const [frame, grip] = r.colors || ["#888", "#333"];
     const s = Math.sqrt(r.headSize / 100);
@@ -72,7 +88,7 @@
 
   // Clickable picture box → opens the full-screen viewer.
   const picBox = (r, cls) =>
-    `<div class="pic ${cls}" data-zoom="${esc(r.id)}" role="button" tabindex="0" aria-label="View ${esc(r.brand + " " + r.model)} full screen">${racketImage(r)}</div>`;
+    `<div class="pic ${cls}" data-zoom="${esc(r.id)}" role="button" tabindex="0" aria-label="View ${esc(r.brand + " " + r.model)} full screen">${racketImage(r, false, cls === "small")}</div>`;
 
   // ---------- Full-screen viewer ----------
   function openZoom(id) {
@@ -152,37 +168,48 @@
   }
 
   // ---------- Compare ----------
+  // Columns are labelled A–D; each value shows its difference from A and a dot for
+  // where it sits among all rackets (min/max printed under the row label).
   function renderTable() {
     const rs = selected.map(id => byId.get(id));
+    const a = rs[0];
     const diffOnly = $("diffOnly").checked;
-    const head = `<thead><tr><th></th>${rs.map(r =>
-      `<th>${picBox(r, "small")}<span class="brand">${esc(r.brand)}</span>${esc(r.model)}<button class="remove" data-remove="${esc(r.id)}" aria-label="Remove">×</button></th>`
+    const head = `<thead><tr><th class="corner"><span class="muted">Specs</span></th>${rs.map((r, i) =>
+      `<th>${picBox(r, "small")}<span class="letter">${LETTERS[i]}</span><span class="brand">${esc(r.brand)}</span><span class="model">${esc(r.model)}</span><button class="remove" data-remove="${esc(r.id)}" aria-label="Remove ${esc(r.brand + " " + r.model)}">×</button></th>`
     ).join("")}</tr></thead>`;
 
-    const body = FIELDS.map(f => {
+    const row = f => {
       const vals = rs.map(f.fmt);
-      const differs = new Set(vals).size > 1;
+      const subs = rs.map(r => f.sub ? f.sub(r) : "");
+      const differs = new Set(vals.map((v, i) => v + subs[i])).size > 1;
       if (diffOnly && !differs) return "";
-      let cells;
-      if (f.num) {
-        const [lo, hi] = ranges[f.key];
-        const nums = rs.map(f.num);
-        const known = nums.filter(has);
-        const max = Math.max(...known);
-        const comparable = !f.group || new Set(rs.filter(r => has(f.num(r))).map(f.group)).size <= 1;
-        cells = rs.map((r, i) => {
-          if (!has(nums[i]) || !comparable) return `<td>${esc(vals[i])}</td>`;
-          const pct = hi === lo ? 100 : 15 + 85 * (nums[i] - lo) / (hi - lo);
-          const top = differs && known.length > 1 && nums[i] === max;
-          return `<td class="${top ? "hi" : ""}">${esc(vals[i])}<div class="bar"><span style="width:${pct}%"></span></div></td>`;
-        });
-      } else {
-        cells = vals.map(v => `<td>${esc(v)}</td>`);
-      }
-      return `<tr class="${differs ? "diff" : ""}"><th scope="row">${f.label}</th>${cells.join("")}</tr>`;
+      const comparable = !f.group || new Set(rs.filter(r => has(f.num(r))).map(f.group)).size <= 1;
+      const [lo, hi] = f.num ? ranges[f.key] : [0, 0];
+      const scaleTxt = v => f.scale ? f.scale(v) : `${+v.toFixed(1)}${f.unit || ""}`;
+      const range = f.num && hi > lo ? `<span class="range">All rackets: ${esc(scaleTxt(lo))} – ${esc(scaleTxt(hi))}</span>` : "";
+      const cells = rs.map((r, i) => {
+        let html = `<div class="val">${esc(vals[i])}</div>`;
+        if (subs[i]) html += `<div class="sub">${esc(subs[i])}</div>`;
+        if (f.delta && has(f.num(r)) && has(f.num(a)) && comparable) {
+          // Column A gets an empty line so every column's dot sits at the same height.
+          const d = i === 0 ? "" : vals[i] + subs[i] === vals[0] + subs[0] ? "same as A" : (f.delta(r, a) || "same pts, different cm") + " vs A";
+          html += `<div class="delta">${esc(d) || "&nbsp;"}</div>`;
+        }
+        if (f.num && has(f.num(r)) && comparable && hi > lo) {
+          const pct = (100 * (f.num(r) - lo)) / (hi - lo);
+          html += `<div class="track" aria-hidden="true"><span style="left:${pct.toFixed(1)}%"></span></div>`;
+        }
+        return `<td>${html}</td>`;
+      }).join("");
+      return `<tr class="${differs ? "" : "same"}"><th scope="row">${f.label}${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ""}${range}</th>${cells}</tr>`;
+    };
+
+    const body = TABLE_GROUPS.map(g => {
+      const rows = g.keys.map(k => row(FIELDS.find(f => f.key === k))).join("");
+      return rows ? `<tr class="group"><th colspan="${rs.length + 1}" scope="colgroup">${g.name}</th></tr>${rows}` : "";
     }).join("");
 
-    $("table").innerHTML = head + `<tbody>${body || `<tr><td class="muted">No differences.</td></tr>`}</tbody>`;
+    $("table").innerHTML = head + `<tbody>${body || `<tr><td colspan="${rs.length + 1}" class="muted">No differences.</td></tr>`}</tbody>`;
   }
 
   // ---------- Routing (#compare=id1,id2 is shareable) ----------

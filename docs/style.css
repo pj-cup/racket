@@ -1,14 +1,18 @@
 :root {
-  --bg: #f6f7f4;
+  /* Tennis palette: hard-court blue, court-surround green, chalk lines, ball yellow. */
+  --bg: #eef2ee;
   --surface: #ffffff;
-  --text: #1b1f1a;
-  --muted: #61695f;
-  --line: #dfe3db;
-  --accent: #2f7d32;
+  --text: #13201a;
+  --muted: #56655d;
+  --line: #d9e1db;
+  --court: #2a5f94;
+  --court-out: #3d7a4f;
+  --court-line: #ffffff;
+  --accent: #2a5f94;
   --accent-ink: #ffffff;
-  --accent-soft: #e3f1e2;
-  --bar: #c9dcc6;
-  --diff: #fff6d6;
+  --accent-soft: #e1ecf7;
+  --ball: #d8ef3c;
+  --ball-edge: #3f4a12;
   --radius: 10px;
   --pic-bg: #eef1ea;
   --strings: #9aa397;
@@ -16,17 +20,20 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121512;
-    --surface: #1b1f1b;
-    --text: #e6eae4;
-    --muted: #9aa597;
-    --line: #2d332c;
-    --accent: #7cc47f;
-    --accent-ink: #0f1a10;
-    --accent-soft: #233425;
-    --bar: #36513a;
-    --diff: #34301c;
-    --pic-bg: #161a16;
+    --bg: #0d1411;
+    --surface: #152019;
+    --text: #e6ece8;
+    --muted: #9aaba1;
+    --line: #26352d;
+    --court: #1d4670;
+    --court-out: #24502f;
+    --court-line: #dfe9f2;
+    --accent: #86b8ea;
+    --accent-ink: #0b1a2a;
+    --accent-soft: #1b2e42;
+    --ball: #cfe83a;
+    --ball-edge: #0d1411;
+    --pic-bg: #111a15;
     --strings: #59625a;
     --frame-edge: rgba(255, 255, 255, 0.18);
   }
@@ -45,9 +52,32 @@ a { color: inherit; text-decoration: none; }
 .muted { color: var(--muted); }
 
 .top, main, footer { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
-.top { padding-top: 28px; }
-.top h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
-.tag { margin: 4px 0 20px; color: var(--muted); }
+
+/* Header: a hard court seen from above (blue court, green surround, white lines, net across the middle). */
+.court-band { background: var(--court-out); padding: 14px 16px; margin-bottom: 20px; }
+.top {
+  position: relative; overflow: hidden; padding: 22px 24px; border-radius: 4px;
+  background: var(--court); color: #fff;
+  box-shadow: inset 0 0 0 3px var(--court-line);
+}
+/* A mini court on the right: baselines + sidelines, service lines, centre service line, and the net. */
+.top::before {
+  content: ""; position: absolute; top: 14px; bottom: 14px; right: 24px; width: 38%; pointer-events: none; opacity: 0.6;
+  border: 2px solid var(--court-line);
+  background:
+    linear-gradient(var(--court-line), var(--court-line)) 23% 0 / 2px 100% no-repeat,
+    linear-gradient(var(--court-line), var(--court-line)) 77% 0 / 2px 100% no-repeat,
+    linear-gradient(var(--court-line), var(--court-line)) center / 54% 2px no-repeat;
+}
+.top::after {
+  content: ""; position: absolute; top: 6px; bottom: 6px; right: calc(24px + 19%); width: 3px; pointer-events: none; opacity: 0.85;
+  background: repeating-linear-gradient(to bottom, var(--court-line) 0 3px, transparent 3px 6px);
+}
+@media (max-width: 640px) { .top::before, .top::after { display: none; } }
+.top > * { position: relative; z-index: 1; }
+.top h1 { margin: 0; font-size: 1.7rem; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+.top h1 svg { width: 30px; height: 30px; flex: none; }
+.tag { margin: 4px 0 0; color: rgba(255, 255, 255, 0.85); }
 footer { padding-top: 32px; font-size: 0.85rem; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
@@ -62,7 +92,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 14px; display: flex; flex-direction: column; gap: 10px;
 }
-.card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), inset 0 4px 0 var(--ball); }
 .pic {
   background: var(--pic-bg); border-radius: calc(var(--radius) - 4px);
   height: 180px; display: flex; align-items: center; justify-content: center; overflow: hidden;
@@ -71,7 +101,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .pic[data-zoom]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pic:has(img) { background: #ffffff; padding: 8px; } /* product shots are made for a light background */
 .pic svg, .pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.pic.small { width: 100%; max-width: 180px; height: 120px; margin-bottom: 8px; }
+.pic.small { width: 100%; max-width: 160px; height: 84px; margin-bottom: 8px; }
 .card .brand { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .card h3 { margin: 0; font-size: 1.05rem; }
 .specs { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 0.9rem; }
@@ -104,18 +134,46 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .compare-head .btn { margin-left: auto; }
 .toggle { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
 
-.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-table { border-collapse: collapse; width: 100%; min-width: 520px; }
-th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+.table-wrap { overflow: auto; max-height: calc(100dvh - 120px); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 560px; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; background: var(--surface); }
 tr:last-child th, tr:last-child td { border-bottom: 0; }
-thead th { font-weight: 600; }
+/* Racket names stay visible while scrolling down; spec names while scrolling sideways. */
+thead th { font-weight: 600; position: sticky; top: 0; z-index: 2; vertical-align: bottom; }
+tbody th, thead th.corner { position: sticky; left: 0; z-index: 1; }
+thead th.corner { z-index: 3; }
 thead .brand { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
-tbody th { color: var(--muted); font-weight: 500; white-space: nowrap; width: 1%; }
+thead .model { font-size: 1rem; }
+.letter {
+  display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-ink); font-size: 0.75rem; font-weight: 700; margin-bottom: 4px;
+}
+tbody th { color: var(--text); font-weight: 600; width: 1%; min-width: 170px; max-width: 220px; }
+tbody th .hint, tbody th .range { display: block; font-weight: 400; font-size: 0.78rem; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+tbody th .range { font-variant-numeric: tabular-nums; }
+tr.group th {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600;
+  background: var(--accent-soft); color: var(--accent); padding-top: 8px; padding-bottom: 8px; position: static;
+  border-left: 4px solid var(--accent);
+}
 td { font-variant-numeric: tabular-nums; }
-tr.diff td { background: var(--diff); }
-.bar { height: 4px; background: var(--line); border-radius: 2px; margin-top: 6px; }
-.bar span { display: block; height: 100%; background: var(--bar); border-radius: 2px; }
-td.hi .bar span { background: var(--accent); }
+td .val { font-size: 1.05rem; font-weight: 600; }
+td .sub { font-size: 0.85rem; color: var(--text); margin-top: 1px; white-space: nowrap; }
+td .val, .specs dd { white-space: nowrap; }
+td .delta { font-size: 0.82rem; color: var(--muted); margin-top: 1px; }
+/* Rows where every racket matches fade back, so the differences stand out. */
+tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
+/* Position among all rackets: a dot on a min→max track. */
+/* Position among all rackets: a tennis ball on a chalk line. */
+.track { position: relative; height: 3px; background: var(--line); border-radius: 2px; margin: 11px 6px 3px; }
+.track span {
+  position: absolute; top: 50%; width: 13px; height: 13px; border-radius: 50%; transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle at 115% 50%, transparent 52%, rgba(255, 255, 255, 0.9) 53% 60%, transparent 61%),
+    radial-gradient(circle at -15% 50%, transparent 52%, rgba(255, 255, 255, 0.9) 53% 60%, transparent 61%),
+    var(--ball);
+  box-shadow: 0 0 0 1.5px var(--ball-edge), 0 0 0 3.5px var(--surface);
+}
 .remove { margin-left: 6px; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
 
 /* Full-screen viewer */
@@ -139,4 +197,16 @@ td.hi .bar span { background: var(--accent); }
 .zoom-close {
   position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(0, 0, 0, 0.4); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer;
+}
+
+/* Phones: narrower pinned spec column; cells keep a readable width and the table scrolls sideways. */
+@media (max-width: 640px) {
+  table { min-width: 0; }
+  th, td { padding: 8px 10px; }
+  tbody th { min-width: 112px; max-width: 132px; font-size: 0.88rem; }
+  tbody th .hint { display: none; }
+  td { min-width: 118px; }
+  td .val { font-size: 0.95rem; }
+  .pic.small { height: 64px; }
+  .compare-head .btn { margin-left: 0; }
 }

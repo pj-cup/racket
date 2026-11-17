@@ -87,5 +87,12 @@ window.RACKETS = [
   { id: "tecnifibre-tf40-305-16m-v3", brand: "Tecnifibre", model: "TF-40 305 16M V3",
     headSize: 98, weight: 305, balance: 32.5, swingweight: null, swingweightType: null, stiffness: null, beam: "21.7", length: 27, pattern: "16x19",
     colors: ["#e9e9e9", "#c0272d"],
-    source: "https://www.tecnifibre.com/en/products/tf-40-305-16m-v3" }
+    source: "https://www.tecnifibre.com/en/products/tf-40-305-16m-v3" },
+
+  // ---- Dunlop (us.dunlopsports.com "2027 CX Series" spec table; no swingweight/stiffness published) ----
+  { id: "dunlop-cx-200-2027", brand: "Dunlop", model: "CX 200 (2027)",
+    headSize: 98, weight: 305, balance: 31.5, swingweight: null, swingweightType: null, stiffness: null, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#d0202a", "#1b1b1b"],
+    source: "https://us.dunlopsports.com/dunlop/tennis/rackets/cx-series/cx-200-tennis-racket/MCX200.html",
+    image: "https://us.dunlopsports.com/on/demandware.static/-/Sites-masterCatalog_DunlopSports/default/dw1a1e48b6/images/large/10380455_CX200_1.jpg" }
 ];

@@ -19,23 +19,23 @@
   // delta(r, a): difference from racket A, as text (compare table only).
   const signed = (d, unit) => (d > 0 ? "+" : "−") + Math.abs(+d.toFixed(1)) + unit;
   const FIELDS = [
-    { key: "headSize",  label: "Head size",  unit: " sq in", num: r => r.headSize,
+    { key: "headSize", emoji: "🎯",  label: "Head size",  unit: " sq in", num: r => r.headSize,
       hint: "Bigger = more forgiving, less precise", extremes: ["Biggest", "Smallest"], delta: (r, a) => signed(r.headSize - a.headSize, " sq in") },
-    { key: "weight",    label: "Weight",     unit: " g", num: r => r.weight,
+    { key: "weight", emoji: "🏋️",    label: "Weight",     unit: " g", num: r => r.weight,
       hint: "Unstrung. Heavier = more stable, more effort", extremes: ["Heaviest", "Lightest"], delta: (r, a) => signed(r.weight - a.weight, " g") },
-    { key: "balance",   label: "Balance",    fmt: fmtBalance, num: r => balancePts(r), scale: v => ptsLabel(Math.round(v)),
+    { key: "balance", emoji: "⚖️",   label: "Balance",    fmt: fmtBalance, num: r => balancePts(r), scale: v => ptsLabel(Math.round(v)),
       sub: r => has(r.balance) ? `${r.balance.toFixed(1)} cm` : "",
       hint: "Unstrung. More pts HL = quicker hands, less plow", extremes: ["Most HL", "Least HL"],
       delta: (r, a) => { const d = Math.round(balancePts(r)) - Math.round(balancePts(a)); return d === 0 ? "" : `${pts(Math.abs(d))} ${d > 0 ? "more" : "less"} HL`; } },
     // Every racket uses Tennis Warehouse strung swing weight, so they compare directly (group kept as a guard).
-    { key: "swingweight", label: "Swing weight", fmt: r => has(r.swingweight) ? `${r.swingweight}` : NA,
+    { key: "swingweight", emoji: "💨", label: "Swing weight", fmt: r => has(r.swingweight) ? `${r.swingweight}` : NA,
       num: r => r.swingweight, group: r => r.swingweightType, extremes: ["Highest", "Lowest"],
       hint: "Strung. Higher = more power and stability, slower to swing", delta: (r, a) => signed(r.swingweight - a.swingweight, "") },
-    { key: "stiffness", label: "Stiffness",  unit: " RA", num: r => r.stiffness,
+    { key: "stiffness", emoji: "💪", label: "Stiffness",  unit: " RA", num: r => r.stiffness,
       hint: "Higher = more power, less comfort", extremes: ["Stiffest", "Softest"], delta: (r, a) => signed(r.stiffness - a.stiffness, " RA") },
-    { key: "pattern",   label: "String pattern", hint: "Open (16x19) = more spin; dense (18x20) = more control" },
-    { key: "beam",      label: "Beam",       unit: " mm", hint: "Thicker = more power, less feel" },
-    { key: "length",    label: "Length",     unit: " in", num: r => r.length, extremes: ["Longest", "Shortest"], delta: (r, a) => signed(r.length - a.length, " in") },
+    { key: "pattern", emoji: "🕸️",   label: "String pattern", hint: "Open (16x19) = more spin; dense (18x20) = more control" },
+    { key: "beam", emoji: "📐",      label: "Beam",       unit: " mm", hint: "Thicker = more power, less feel" },
+    { key: "length", emoji: "📏",    label: "Length",     unit: " in", num: r => r.length, extremes: ["Longest", "Shortest"], delta: (r, a) => signed(r.length - a.length, " in") },
   ];
   const TABLE_GROUPS = [
     { name: "Feel",  keys: ["weight", "balance", "swingweight", "stiffness"] },
@@ -95,7 +95,7 @@
     const r = byId.get(id);
     if (!r) return;
     const keySpecs = ["headSize", "weight", "balance", "pattern"]
-      .map(k => FIELDS.find(f => f.key === k).fmt(r)).join(" · ");
+      .map(k => { const f = FIELDS.find(f => f.key === k); return `${f.emoji} ${f.fmt(r)}`; }).join(" · ");
     $("zoomPic").className = "zoom-pic" + (r.image ? " photo" : "");
     $("zoomPic").innerHTML = r.image
       ? `<img src="${esc(r.image)}" alt="${esc(r.brand + " " + r.model)}" data-id="${esc(r.id)}" referrerpolicy="no-referrer">`
@@ -103,7 +103,86 @@
     $("zoomTitle").innerHTML = `<span class="brand">${esc(r.brand)}</span>${esc(r.model)}`;
     $("zoomMeta").innerHTML = `${esc(keySpecs)}`;
     $("zoom").showModal();
+    zoomTo(1);
   }
+
+  // Zoom inside the viewer: click/tap toggles, wheel and pinch zoom at the pointer, drag pans, buttons and +/−/0 keys.
+  const ZMIN = 1, ZMAX = 5, ZSTEP = 1.5, ZTAP = 2.5;
+  let zs = 1, zx = 0, zy = 0;
+  const zoomEl = () => $("zoomPic").firstElementChild;
+  function zoomApply() {
+    const el = zoomEl(), box = $("zoomPic");
+    if (!el) return;
+    // Keep the picture covering the box: pan at most half of the extra size each way.
+    const mx = (zs - 1) * el.offsetWidth / 2, my = (zs - 1) * el.offsetHeight / 2;
+    zx = Math.max(-mx, Math.min(mx, zx));
+    zy = Math.max(-my, Math.min(my, zy));
+    el.style.transform = zs === 1 ? "" : `translate(${zx}px, ${zy}px) scale(${zs})`;
+    box.classList.toggle("zoomed", zs > 1);
+    $("zoomReset").textContent = Math.round(zs * 100) + "%";
+    $("zoomOut").disabled = zs <= ZMIN;
+    $("zoomIn").disabled = zs >= ZMAX;
+  }
+  // Zoom to scale s, keeping the screen point (px, py) — relative to the box centre — fixed.
+  function zoomTo(s, px = 0, py = 0) {
+    s = Math.max(ZMIN, Math.min(ZMAX, s));
+    if (s === 1) { zx = zy = 0; }
+    else { zx = px - (px - zx) * s / zs; zy = py - (py - zy) * s / zs; }
+    zs = s;
+    zoomApply();
+  }
+  function fromCentre(e) {
+    const b = $("zoomPic").getBoundingClientRect();
+    return [e.clientX - b.left - b.width / 2, e.clientY - b.top - b.height / 2];
+  }
+  const pointers = new Map();
+  let dragged = false, pinchStart = null;
+  $("zoomPic").addEventListener("pointerdown", e => {
+    pointers.set(e.pointerId, e);
+    $("zoomPic").setPointerCapture(e.pointerId);
+    dragged = false;
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinchStart = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), s: zs };
+    }
+  });
+  $("zoomPic").addEventListener("pointermove", e => {
+    const prev = pointers.get(e.pointerId);
+    if (!prev) return;
+    pointers.set(e.pointerId, e);
+    if (pointers.size === 2 && pinchStart) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      const [px, py] = fromCentre({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 });
+      zoomTo(pinchStart.s * d / pinchStart.d, px, py);
+      dragged = true;
+    } else if (pointers.size === 1 && zs > 1) {
+      const dx = e.clientX - prev.clientX, dy = e.clientY - prev.clientY;
+      if (Math.abs(dx) + Math.abs(dy) > 0) { zx += dx; zy += dy; zoomApply(); }
+      if (Math.abs(dx) + Math.abs(dy) > 2) dragged = true;
+    }
+  });
+  const pointerUp = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinchStart = null; };
+  $("zoomPic").addEventListener("pointerup", pointerUp);
+  $("zoomPic").addEventListener("pointercancel", pointerUp);
+  $("zoomPic").addEventListener("click", e => {
+    if (dragged) { dragged = false; return; }
+    const [px, py] = fromCentre(e);
+    zoomTo(zs > 1 ? 1 : ZTAP, px, py);
+  });
+  $("zoomPic").addEventListener("wheel", e => {
+    e.preventDefault();
+    const [px, py] = fromCentre(e);
+    zoomTo(zs * Math.exp(-e.deltaY * 0.002), px, py);
+  }, { passive: false });
+  $("zoomIn").addEventListener("click", () => zoomTo(zs * ZSTEP));
+  $("zoomOut").addEventListener("click", () => zoomTo(zs / ZSTEP));
+  $("zoomReset").addEventListener("click", () => zoomTo(1));
+  $("zoom").addEventListener("keydown", e => {
+    if (e.key === "+" || e.key === "=") zoomTo(zs * ZSTEP);
+    else if (e.key === "-") zoomTo(zs / ZSTEP);
+    else if (e.key === "0") zoomTo(1);
+  });
 
   // ---------- Browse ----------
   [...new Set(data.map(r => r.brand))].sort().forEach(b => {
@@ -138,7 +217,7 @@
     $("grid").innerHTML = list.map(r => {
       const on = selected.includes(r.id);
       const rows = FIELDS.filter(f => CARD_FIELDS.includes(f.key))
-        .map(f => `<dt>${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
+        .map(f => `<dt>${f.emoji} ${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
       return `<article class="card${on ? " selected" : ""}">
         ${picBox(r, "")}
         <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3></div>
@@ -211,7 +290,7 @@
         }
         return `<td>${html}</td>`;
       }).join("");
-      return `<tr class="${differs ? "" : "same"}"><th scope="row">${f.label}${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ""}${range}</th>${cells}</tr>`;
+      return `<tr class="${differs ? "" : "same"}"><th scope="row"><span class="emo">${f.emoji} </span>${f.label}${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ""}${range}</th>${cells}</tr>`;
     };
 
     const body = TABLE_GROUPS.map(g => {

@@ -15,6 +15,6 @@ Static site for browsing and comparing tennis rackets. See README.md for the lay
 - wilson.com, head.com, tecnifibre.com and most Shopify tennis stores return 429 or 403 to curl and WebFetch.
 - tennis-warehouse.com works with a browser User-Agent:
   - Specs: product pages `…/descpage<RC><BRAND>-<CODE>.html`. Look for `Swingweight: N` in the Specifications block. Older models show the number in the playtest review (`learning_center/racquet_reviews/<CODE>review.html`).
-  - Photos: `https://img.tennis-warehouse.com/watermark/rs.php?path=<CODE>-1.jpg&nw=1400`. This is a two-view (side and face) shot with no watermark.
+  - Photos: `https://img.tennis-warehouse.com/new_big/<CODE>-1.jpg`. This is a 1400x2400 two-view (side and face) shot with no watermark, served as a quality-92 WebP with a transparent background even though the URL ends in `.jpg`. Save it as `docs/img/<racket-id>.webp` without re-encoding. Check the real format with `file`: a few older products return a JPEG instead, so save those as `.jpg`. Avoid `watermark/rs.php`, which serves the same image re-encoded as a quality-63 JPEG.
   - The search page is rendered by JavaScript, so use WebSearch with `allowed_domains: ["tennis-warehouse.com"]` to find a racket's page and code.
 - To confirm a TW listing is the same racket, match its `data-gtm_detail_stock_number` with the brand's product code.

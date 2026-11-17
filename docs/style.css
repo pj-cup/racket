@@ -78,6 +78,8 @@ a { color: inherit; text-decoration: none; }
 .top h1 { margin: 0; font-size: 1.7rem; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
 .top h1 svg { width: 30px; height: 30px; flex: none; }
 .tag { margin: 4px 0 0; color: rgba(255, 255, 255, 0.85); }
+/* Phones: no header. */
+@media (max-width: 640px) { .court-band { display: none; } main { padding-top: 16px; } th .emo { display: none; } }
 footer { padding-top: 32px; font-size: 0.85rem; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
@@ -139,7 +141,7 @@ table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 56
 th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; background: var(--surface); }
 tr:last-child th, tr:last-child td { border-bottom: 0; }
 /* Racket names stay visible while scrolling down; spec names while scrolling sideways. */
-thead th { font-weight: 600; position: sticky; top: 0; z-index: 2; vertical-align: bottom; }
+thead th { font-weight: 600; position: sticky; top: 0; z-index: 2; vertical-align: top; }
 tbody th, thead th.corner { position: sticky; left: 0; z-index: 1; }
 thead th.corner { z-index: 3; }
 thead .brand { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
@@ -195,6 +197,17 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 }
 .zoom-pic.photo { background: #ffffff; padding: 16px; }
 .zoom-pic img, .zoom-pic svg { max-width: 100%; max-height: 100%; width: 100%; height: 100%; object-fit: contain; display: block; }
+.zoom-pic { cursor: zoom-in; touch-action: none; user-select: none; -webkit-user-select: none; }
+.zoom-pic.zoomed { cursor: grab; }
+.zoom-pic.zoomed:active { cursor: grabbing; }
+.zoom-pic img { -webkit-user-drag: none; pointer-events: none; }
+.zoom-tools { display: flex; gap: 6px; }
+.zoom-tools button {
+  min-width: 44px; height: 36px; padding: 0 10px; border-radius: 18px; font: inherit; font-size: 1rem; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.08); color: #fff;
+}
+.zoom-tools button:disabled { opacity: 0.4; cursor: default; }
+.zoom-tools #zoomReset { min-width: 64px; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 .zoom-caption { text-align: center; }
 .zoom-caption h2 { margin: 0; font-size: 1.3rem; }
 .zoom-caption .brand { display: block; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: #a9b2a6; font-weight: 500; }

@@ -19,4 +19,4 @@ python3 -m http.server -d docs
 - **Swing weight** (strung) and **stiffness** are Tennis Warehouse's measurements for every racket. It's one lab measuring every racket the same way, so the numbers compare directly.
 - **Balance** is unstrung, from the brand's spec.
 - **Beam** comes from the brand, or from Tennis Warehouse when the brand doesn't publish it.
-- **Photos** come from the brand's CDN, or from Tennis Warehouse when the brand site blocks downloads (Wilson, Head, Tecnifibre).
+- **Photos** come from Tennis Warehouse at their highest quality (1400x2400 two-view shots), except Babolat, whose photos come from the brand.

@@ -24,6 +24,23 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 324, swingweightType: "strung", stiffness: 63, beam: "21/23/21", length: 27, pattern: "16x19",
     colors: ["#9aa0a8", "#d8382e"],
     image: "img/babolat-pure-strike-100-gen4.png" },
+  { id: "babolat-pure-aero-98-gen9", brand: "Babolat", model: "Pure Aero 98 Gen9",
+    headSize: 98, weight: 305, balance: 31.5, swingweight: 322, swingweightType: "strung", stiffness: 66, beam: "21/23/22", length: 27, pattern: "16x20",
+    colors: ["#f2c400", "#3a3d42"],
+    image: "img/babolat-pure-aero-98-gen9.webp" },
+  { id: "babolat-pure-drive-98-gen11", brand: "Babolat", model: "Pure Drive 98 Gen11",
+    headSize: 98, weight: 305, balance: 32.5, swingweight: 326, swingweightType: "strung", stiffness: 69, beam: "21/23/22", length: 27, pattern: "16x20",
+    colors: ["#1f5fbf", "#111827"],
+    image: "img/babolat-pure-drive-98-gen11.webp" },
+  { id: "babolat-pure-strike-97-gen4", brand: "Babolat", model: "Pure Strike 97 Gen4",
+    // swingweight/stiffness from the Tennis Warehouse playtest review (PS97Sreview); the product page is no longer listed
+    headSize: 97, weight: 310, balance: 31.0, swingweight: 321, swingweightType: "strung", stiffness: 63, beam: "21/22/21", length: 27, pattern: "16x20",
+    colors: ["#9aa0a8", "#d8382e"],
+    image: "img/babolat-pure-strike-97-gen4.jpg" },
+  { id: "babolat-pure-strike-98-18x20-gen4", brand: "Babolat", model: "Pure Strike 98 18x20 Gen4",
+    headSize: 98, weight: 305, balance: 32.0, swingweight: 332, swingweightType: "strung", stiffness: 63, beam: "21/23/21", length: 27, pattern: "18x20",
+    colors: ["#6b7078", "#1a1a1a"],
+    image: "img/babolat-pure-strike-98-18x20-gen4.webp" },
 
   // ---- Wilson (wilson.com listings; photos from Tennis Warehouse) ----
   { id: "wilson-pro-staff-97-v14", brand: "Wilson", model: "Pro Staff 97 V14",
@@ -34,6 +51,11 @@ window.RACKETS = [
     headSize: 98, weight: 305, balance: 32.0, swingweight: 322, swingweightType: "strung", stiffness: 61, beam: "21.5→20.5", length: 27, pattern: "16x19",
     colors: ["#3f6b3a", "#1a1a1a"],
     image: "img/wilson-blade-98-16x19-v10.webp" },
+  { id: "wilson-blade-98-18x20-v10", brand: "Wilson", model: "Blade 98 18x20 V10",
+    // unstrung weight/balance from Wilson's spec (nz.wilson.com); beam from Tennis Warehouse
+    headSize: 98, weight: 305, balance: 32.0, swingweight: 325, swingweightType: "strung", stiffness: 61, beam: "21.5/21.5/20.5", length: 27, pattern: "18x20",
+    colors: ["#3f6b3a", "#1a1a1a"],
+    image: "img/wilson-blade-98-18x20-v10.webp" },
   { id: "wilson-clash-100-v3", brand: "Wilson", model: "Clash 100 V3",
     // unstrung balance from retailer listings of Wilson's spec (wilson.com blocks automated access)
     headSize: 100, weight: 292.5, balance: 31.0, swingweight: 308, swingweightType: "strung", stiffness: 54, beam: "24.5", length: 27, pattern: "16x19",
@@ -111,6 +133,27 @@ window.RACKETS = [
     headSize: 100, weight: 295, balance: 31.5, swingweight: 316, swingweightType: "strung", stiffness: 61, beam: "24", length: 27, pattern: "16x19",
     colors: ["#e8644a", "#1a1a1a"],
     image: "img/head-boom-mp-2026.webp" },
+  { id: "head-speed-pro-2026", brand: "Head", model: "Speed Pro 2026",
+    // unstrung weight/balance and beam from Head's spec via retailer listings (head.com blocks automated access)
+    headSize: 100, weight: 310, balance: 31.0, swingweight: 328, swingweightType: "strung", stiffness: 61, beam: "23", length: 27, pattern: "18x20",
+    colors: ["#f0f0f0", "#1a1a1a"],
+    image: "img/head-speed-pro-2026.webp" },
+  { id: "head-extreme-pro-2026", brand: "Head", model: "Extreme Pro 2026",
+    // unstrung weight/balance and beam from Head's spec via retailer listings (head.com blocks automated access)
+    headSize: 98, weight: 305, balance: 31.5, swingweight: 319, swingweightType: "strung", stiffness: 64, beam: "22/23/21", length: 27, pattern: "16x19",
+    colors: ["#b8d62a", "#1a1a1a"],
+    image: "img/head-extreme-pro-2026.webp" },
+  { id: "head-radical-pro-2025", brand: "Head", model: "Radical Pro 2025",
+    // unstrung weight/balance and beam from Head's spec via retailer listings (head.com blocks automated access)
+    headSize: 98, weight: 315, balance: 31.5, swingweight: 329, swingweightType: "strung", stiffness: 65, beam: "20/21.5/21", length: 27, pattern: "16x19",
+    colors: ["#f07a1a", "#1d3b78"],
+    image: "img/head-radical-pro-2025.webp" },
+  { id: "head-gravity-pro-2025", brand: "Head", model: "Gravity Pro 2025",
+    // unstrung weight/balance and beam from Head's spec via retailer listings (head.com blocks automated access);
+    // a few retailers list 315 mm balance, but most (incl. Tennis Warehouse Europe) list 310 mm
+    headSize: 100, weight: 315, balance: 31.0, swingweight: 329, swingweightType: "strung", stiffness: 59, beam: "20", length: 27, pattern: "18x20",
+    colors: ["#1c5d8c", "#1a1a1a"],
+    image: "img/head-gravity-pro-2025.webp" },
 
   // ---- Yonex (yonex.com spec sheets; photos from Tennis Warehouse) ----
   { id: "yonex-ezone-98-8th", brand: "Yonex", model: "EZONE 98 (8th gen)",
@@ -125,6 +168,14 @@ window.RACKETS = [
     headSize: 98, weight: 305, balance: 31.5, swingweight: 321, swingweightType: "strung", stiffness: 63, beam: "23/23.5/22", length: 27, pattern: "16x19",
     colors: ["#b3122e", "#1a1a1a"],
     image: "img/yonex-vcore-98-8th.webp" },
+  { id: "yonex-vcore-100-8th", brand: "Yonex", model: "VCORE 100 (8th gen)",
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 325, swingweightType: "strung", stiffness: 65, beam: "24/26/23", length: 27, pattern: "16x19",
+    colors: ["#b3122e", "#1a1a1a"],
+    image: "img/yonex-vcore-100-8th.webp" },
+  { id: "yonex-percept-100", brand: "Yonex", model: "Percept 100",
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 318, swingweightType: "strung", stiffness: 66, beam: "23/23/23", length: 27, pattern: "16x19",
+    colors: ["#5b6b3a", "#1a1a1a"],
+    image: "img/yonex-percept-100.jpg" },
   { id: "yonex-percept-97", brand: "Yonex", model: "Percept 97",
     headSize: 97, weight: 310, balance: 31.0, swingweight: 315, swingweightType: "strung", stiffness: 60, beam: "21/21/21", length: 27, pattern: "16x19",
     colors: ["#5b6b3a", "#1a1a1a"],
@@ -138,11 +189,26 @@ window.RACKETS = [
     colors: ["#c9ccd1", "#1a1a1a"],
     image: "img/yonex-muse-100.webp" },
 
-  // ---- Tecnifibre (b2b.tecnifibre.com spec sheet; photo from Tennis Warehouse) ----
+  // ---- Solinco (Solinco's spec via retailer listings — solincosports.com blocks automated access; photos from Tennis Warehouse) ----
+  { id: "solinco-whiteout-305-v2", brand: "Solinco", model: "Whiteout 305 v2",
+    // beam from Tennis Warehouse
+    headSize: 98, weight: 305, balance: 32.0, swingweight: 328, swingweightType: "strung", stiffness: 65, beam: "21.7", length: 27, pattern: "16x19",
+    colors: ["#f0f0f0", "#1a1a1a"],
+    image: "img/solinco-whiteout-305-v2.webp" },
+  { id: "solinco-blackout-300-v2", brand: "Solinco", model: "Blackout 300 v2",
+    headSize: 100, weight: 300, balance: 31.5, swingweight: 317, swingweightType: "strung", stiffness: 66, beam: "23.5/26/23", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/solinco-blackout-300-v2.webp" },
+
+  // ---- Tecnifibre (b2b.tecnifibre.com spec sheets; photos from Tennis Warehouse) ----
   { id: "tecnifibre-tf40-305-16m-v3", brand: "Tecnifibre", model: "TF-40 305 16M V3",
     headSize: 98, weight: 305, balance: 32.5, swingweight: 320, swingweightType: "strung", stiffness: 64, beam: "21.7", length: 27, pattern: "16x19",
     colors: ["#e9e9e9", "#c0272d"],
     image: "img/tecnifibre-tf40-305-16m-v3.webp" },
+  { id: "tecnifibre-tfight-305s", brand: "Tecnifibre", model: "TFight 305S",
+    headSize: 98, weight: 305, balance: 31.5, swingweight: 324, swingweightType: "strung", stiffness: 63, beam: "22.5/23/22.5", length: 27, pattern: "18x19",
+    colors: ["#f0f0f0", "#c0272d"],
+    image: "img/tecnifibre-tfight-305s.webp" },
 
   // ---- Dunlop (us.dunlopsports.com spec tables: "2027 CX Series", SX 300, FX 500; photos from Tennis Warehouse) ----
   { id: "dunlop-cx-200-2027", brand: "Dunlop", model: "CX 200 (2027)",

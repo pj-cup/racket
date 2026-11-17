@@ -75,8 +75,12 @@ window.RACKETS = [
   // ---- Yonex (yonex.com spec sheets) ----
   { id: "yonex-ezone-98-8th", brand: "Yonex", model: "EZONE 98 (8th gen)",
     headSize: 98, weight: 305, balance: 31.5, swingweight: 320, swingweightType: "strung", stiffness: 63, beam: "23.8/24.5/19.5", length: 27, pattern: "16x19",
-    colors: ["#1d4fb8", "#0c1f4a"],
+    colors: ["#1d4fb8", "#f2f2f2"],
     image: "img/yonex-ezone-98-8th.jpg" },
+  { id: "yonex-ezone-100-8th", brand: "Yonex", model: "EZONE 100 (8th gen)",
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 315, swingweightType: "strung", stiffness: 68, beam: "24.5/26.5/23", length: 27, pattern: "16x19",
+    colors: ["#1f4fc4", "#f2f2f2"],
+    image: "img/yonex-ezone-100-8th.jpg" },
   { id: "yonex-vcore-98-8th", brand: "Yonex", model: "VCORE 98 (8th gen)",
     headSize: 98, weight: 305, balance: 31.5, swingweight: 321, swingweightType: "strung", stiffness: 63, beam: "23/23.5/22", length: 27, pattern: "16x19",
     colors: ["#b3122e", "#1a1a1a"],

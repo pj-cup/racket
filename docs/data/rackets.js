@@ -11,19 +11,19 @@
 // image:  "img/<racket-id>.<ext>" relative to docs/ (product photo, saved locally). Without it (or if it fails) an SVG is drawn.
 // colors: [frame, grip] for the drawn SVG only.
 window.RACKETS = [
-  // ---- Babolat (babolat.com spec sheets) ----
+  // ---- Babolat (babolat.com spec sheets; photos from Tennis Warehouse) ----
   { id: "babolat-pure-aero-gen9", brand: "Babolat", model: "Pure Aero Gen9",
     headSize: 100, weight: 300, balance: 32.1, swingweight: 320, swingweightType: "strung", stiffness: 66, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#f2c400", "#1b1b1b"],
-    image: "img/babolat-pure-aero-gen9.png" },
+    image: "img/babolat-pure-aero-gen9.webp" },
   { id: "babolat-pure-drive-gen11", brand: "Babolat", model: "Pure Drive Gen11",
     headSize: 100, weight: 300, balance: 32.0, swingweight: 317, swingweightType: "strung", stiffness: 69, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#1f5fbf", "#111827"],
-    image: "img/babolat-pure-drive-gen11.png" },
+    image: "img/babolat-pure-drive-gen11.webp" },
   { id: "babolat-pure-strike-100-gen4", brand: "Babolat", model: "Pure Strike 100 Gen4",
     headSize: 100, weight: 300, balance: 32.0, swingweight: 324, swingweightType: "strung", stiffness: 63, beam: "21/23/21", length: 27, pattern: "16x19",
     colors: ["#9aa0a8", "#d8382e"],
-    image: "img/babolat-pure-strike-100-gen4.png" },
+    image: "img/babolat-pure-strike-100-gen4.jpg" },
   { id: "babolat-pure-aero-98-gen9", brand: "Babolat", model: "Pure Aero 98 Gen9",
     headSize: 98, weight: 305, balance: 31.5, swingweight: 322, swingweightType: "strung", stiffness: 66, beam: "21/23/22", length: 27, pattern: "16x20",
     colors: ["#f2c400", "#3a3d42"],

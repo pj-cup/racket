@@ -95,6 +95,5 @@ window.RACKETS = [
   { id: "dunlop-cx-200-2027", brand: "Dunlop", model: "CX 200 (2027)",
     headSize: 98, weight: 305, balance: 31.5, swingweight: 316, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
     colors: ["#d0202a", "#1b1b1b"],
-    source: "https://us.dunlopsports.com/dunlop/tennis/rackets/cx-series/cx-200-tennis-racket/MCX200.html",
     image: "https://us.dunlopsports.com/on/demandware.static/-/Sites-masterCatalog_DunlopSports/default/dw1a1e48b6/images/large/10380455_CX200_1.jpg" }
 ];

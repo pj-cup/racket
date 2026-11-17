@@ -89,9 +89,11 @@ window.RACKETS = [
     colors: ["#e9e9e9", "#c0272d"],
     source: "https://www.tecnifibre.com/en/products/tf-40-305-16m-v3" },
 
-  // ---- Dunlop (us.dunlopsports.com "2027 CX Series" spec table; no swingweight/stiffness published) ----
+  // ---- Dunlop (us.dunlopsports.com "2027 CX Series" spec table) ----
+  // Exception: Dunlop doesn't publish swingweight/stiffness, so those two are Tennis Warehouse's
+  // strung measurements: https://www.tennis-warehouse.com/Dunlop_CX_200_16x19_2027_Racquet/descpage-DCX216.html
   { id: "dunlop-cx-200-2027", brand: "Dunlop", model: "CX 200 (2027)",
-    headSize: 98, weight: 305, balance: 31.5, swingweight: null, swingweightType: null, stiffness: null, beam: "21.5", length: 27, pattern: "16x19",
+    headSize: 98, weight: 305, balance: 31.5, swingweight: 316, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
     colors: ["#d0202a", "#1b1b1b"],
     source: "https://us.dunlopsports.com/dunlop/tennis/rackets/cx-series/cx-200-tennis-racket/MCX200.html",
     image: "https://us.dunlopsports.com/on/demandware.static/-/Sites-masterCatalog_DunlopSports/default/dw1a1e48b6/images/large/10380455_CX200_1.jpg" }

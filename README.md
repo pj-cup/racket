@@ -1,4 +1,4 @@
-# racket
+# PJ Racket
 Browse tennis racket specs and compare rackets side by side.
 
 ## View it

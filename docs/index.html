@@ -36,6 +36,10 @@
           <option value="stiffness">Sort: Stiffness</option>
           <option value="balance">Sort: Balance</option>
         </select>
+        <div class="view-toggle" role="group" aria-label="View">
+          <button type="button" data-view="grid" aria-pressed="true" aria-label="Thumbnail view" title="Thumbnails"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5" rx="1"/><rect x="9.5" y="1.5" width="5" height="5" rx="1"/><rect x="1.5" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg></button>
+          <button type="button" data-view="list" aria-pressed="false" aria-label="List view" title="List"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3h13M1.5 8h13M1.5 13h13"/></svg></button>
+        </div>
       </div>
       <p id="count" class="muted"></p>
       <div id="grid" class="grid"></div>

@@ -210,10 +210,17 @@
     return list;
   }
 
+  // Browse view: "grid" (thumbnails) or "list" (one row per racket). Remembered per browser.
+  let view = "grid";
+  try { if (localStorage.getItem("view") === "list") view = "list"; } catch {}
+
   function renderGrid() {
     const list = filtered();
     $("count").textContent = `${list.length} of ${data.length} rackets`;
     const full = selected.length >= MAX;
+    $("grid").className = view;
+    document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
+    if (view === "list") return renderList(list, full);
     $("grid").innerHTML = list.map(r => {
       const on = selected.includes(r.id);
       const rows = FIELDS.filter(f => CARD_FIELDS.includes(f.key))
@@ -227,6 +234,25 @@
         </button>
       </article>`;
     }).join("") || `<p class="muted">No rackets match.</p>`;
+  }
+
+  function renderList(list, full) {
+    const fields = FIELDS.filter(f => CARD_FIELDS.includes(f.key));
+    if (!list.length) { $("grid").innerHTML = `<p class="muted">No rackets match.</p>`; return; }
+    const head = `<div class="list-head" aria-hidden="true"><span></span><span>Racket</span><div class="row-specs">${
+      fields.map(f => `<span>${f.emoji} ${f.label}</span>`).join("")}</div><span></span></div>`;
+    $("grid").innerHTML = head + list.map(r => {
+      const on = selected.includes(r.id);
+      const specs = fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(r))}</div>`).join("");
+      return `<article class="row${on ? " selected" : ""}">
+        ${picBox(r, "small")}
+        <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3></div>
+        <div class="row-specs">${specs}</div>
+        <button class="btn ${on ? "on" : "ghost"}" data-id="${esc(r.id)}" ${!on && full ? "disabled title=\"Up to 4 rackets\"" : ""}>
+          ${on ? "✓ Added" : "+ Compare"}
+        </button>
+      </article>`;
+    }).join("");
   }
 
   function renderTray() {
@@ -331,6 +357,11 @@
 
   // ---------- Events ----------
   ["q", "brand", "head", "sort"].forEach(id => $(id).addEventListener("input", renderGrid));
+  document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.addEventListener("click", () => {
+    view = b.dataset.view;
+    try { localStorage.setItem("view", view); } catch {}
+    renderGrid();
+  }));
   document.addEventListener("click", e => {
     const p = e.target.closest("[data-zoom]");
     if (p) openZoom(p.dataset.zoom);

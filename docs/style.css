@@ -131,7 +131,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 
 .compare-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
 .compare-head h2 { margin: 0; }
-.compare-head .btn { margin-left: auto; }
+.compare-head #copyLink { margin-left: auto; }
 .toggle { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
 
 .table-wrap { overflow: auto; max-height: calc(100dvh - 120px); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
@@ -161,6 +161,11 @@ td .val { font-size: 1.05rem; font-weight: 600; }
 td .sub { font-size: 0.85rem; color: var(--text); margin-top: 1px; white-space: nowrap; }
 td .val, .specs dd { white-space: nowrap; }
 td .delta { font-size: 0.82rem; color: var(--muted); margin-top: 1px; }
+td .tag-line { margin-top: 3px; line-height: 1.2; }
+td .tag {
+  display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 1px 7px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); white-space: nowrap;
+}
 /* Rows where every racket matches fade back, so the differences stand out. */
 tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 /* Position among all rackets: a dot on a min→max track. */
@@ -203,10 +208,16 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 @media (max-width: 640px) {
   table { min-width: 0; }
   th, td { padding: 8px 10px; }
-  tbody th { min-width: 112px; max-width: 132px; font-size: 0.88rem; }
+  tbody th { min-width: 96px; max-width: 132px; font-size: 0.88rem; }
   tbody th .hint { display: none; }
   td { min-width: 118px; }
+  table[data-cols="2"] td { min-width: 0; } /* two rackets fit without sideways scroll */
   td .val { font-size: 0.95rem; }
   .pic.small { height: 64px; }
-  .compare-head .btn { margin-left: 0; }
+  .compare-head #copyLink { margin-left: 0; }
+}
+@media (max-width: 360px) {
+  th, td { padding: 8px 6px; }
+  tbody th { min-width: 84px; }
+  .remove { margin-left: 2px; }
 }

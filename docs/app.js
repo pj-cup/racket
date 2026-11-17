@@ -20,22 +20,22 @@
   const signed = (d, unit) => (d > 0 ? "+" : "−") + Math.abs(+d.toFixed(1)) + unit;
   const FIELDS = [
     { key: "headSize",  label: "Head size",  unit: " sq in", num: r => r.headSize,
-      hint: "Bigger = more forgiving, less precise", delta: (r, a) => signed(r.headSize - a.headSize, " sq in") },
+      hint: "Bigger = more forgiving, less precise", extremes: ["Biggest", "Smallest"], delta: (r, a) => signed(r.headSize - a.headSize, " sq in") },
     { key: "weight",    label: "Weight",     unit: " g", num: r => r.weight,
-      hint: "Unstrung. Heavier = more stable, more effort", delta: (r, a) => signed(r.weight - a.weight, " g") },
+      hint: "Unstrung. Heavier = more stable, more effort", extremes: ["Heaviest", "Lightest"], delta: (r, a) => signed(r.weight - a.weight, " g") },
     { key: "balance",   label: "Balance",    fmt: fmtBalance, num: r => balancePts(r), scale: v => ptsLabel(Math.round(v)),
       sub: r => has(r.balance) ? `${r.balance.toFixed(1)} cm` : "",
-      hint: "Unstrung. More pts HL = quicker hands, less plow",
+      hint: "Unstrung. More pts HL = quicker hands, less plow", extremes: ["Most HL", "Least HL"],
       delta: (r, a) => { const d = Math.round(balancePts(r)) - Math.round(balancePts(a)); return d === 0 ? "" : `${pts(Math.abs(d))} ${d > 0 ? "more" : "less"} HL`; } },
     // Every racket uses Tennis Warehouse strung swing weight, so they compare directly (group kept as a guard).
     { key: "swingweight", label: "Swing weight", fmt: r => has(r.swingweight) ? `${r.swingweight}` : NA,
-      num: r => r.swingweight, group: r => r.swingweightType,
+      num: r => r.swingweight, group: r => r.swingweightType, extremes: ["Highest", "Lowest"],
       hint: "Strung. Higher = more power and stability, slower to swing", delta: (r, a) => signed(r.swingweight - a.swingweight, "") },
     { key: "stiffness", label: "Stiffness",  unit: " RA", num: r => r.stiffness,
-      hint: "Higher = more power, less comfort", delta: (r, a) => signed(r.stiffness - a.stiffness, " RA") },
+      hint: "Higher = more power, less comfort", extremes: ["Stiffest", "Softest"], delta: (r, a) => signed(r.stiffness - a.stiffness, " RA") },
     { key: "pattern",   label: "String pattern", hint: "Open (16x19) = more spin; dense (18x20) = more control" },
     { key: "beam",      label: "Beam",       unit: " mm", hint: "Thicker = more power, less feel" },
-    { key: "length",    label: "Length",     unit: " in", num: r => r.length, delta: (r, a) => signed(r.length - a.length, " in") },
+    { key: "length",    label: "Length",     unit: " in", num: r => r.length, extremes: ["Longest", "Shortest"], delta: (r, a) => signed(r.length - a.length, " in") },
   ];
   const TABLE_GROUPS = [
     { name: "Feel",  keys: ["weight", "balance", "swingweight", "stiffness"] },
@@ -186,6 +186,14 @@
       const comparable = !f.group || new Set(rs.filter(r => has(f.num(r))).map(f.group)).size <= 1;
       const [lo, hi] = f.num ? ranges[f.key] : [0, 0];
       const scaleTxt = v => f.scale ? f.scale(v) : `${+v.toFixed(1)}${f.unit || ""}`;
+      // Highest / lowest among the selected rackets (ties all tagged); none when they're all equal.
+      const tags = rs.map(() => "");
+      if (f.extremes && comparable) {
+        const nums = rs.map(r => has(f.num(r)) ? +f.num(r).toFixed(3) : null);
+        const known = nums.filter(has);
+        const mx = Math.max(...known), mn = Math.min(...known);
+        if (known.length >= 2 && mx > mn) nums.forEach((n, i) => { tags[i] = n === mx ? f.extremes[0] : n === mn ? f.extremes[1] : ""; });
+      }
       const range = f.num && hi > lo ? `<span class="range">All rackets: ${esc(scaleTxt(lo))} – ${esc(scaleTxt(hi))}</span>` : "";
       const cells = rs.map((r, i) => {
         let html = `<div class="val">${esc(vals[i])}</div>`;
@@ -195,6 +203,8 @@
           const d = i === 0 ? "" : vals[i] + subs[i] === vals[0] + subs[0] ? "same as A" : (f.delta(r, a) || "same pts, different cm") + " vs A";
           html += `<div class="delta">${esc(d) || "&nbsp;"}</div>`;
         }
+        // Every column gets the tag line when any does, so the dots stay level.
+        if (tags.some(Boolean)) html += `<div class="tag-line">${tags[i] ? `<span class="tag">${esc(tags[i])}</span>` : "&nbsp;"}</div>`;
         if (f.num && has(f.num(r)) && comparable && hi > lo) {
           const pct = (100 * (f.num(r) - lo)) / (hi - lo);
           html += `<div class="track" aria-hidden="true"><span style="left:${pct.toFixed(1)}%"></span></div>`;
@@ -209,6 +219,7 @@
       return rows ? `<tr class="group"><th colspan="${rs.length + 1}" scope="colgroup">${g.name}</th></tr>${rows}` : "";
     }).join("");
 
+    $("table").dataset.cols = rs.length;
     $("table").innerHTML = head + `<tbody>${body || `<tr><td colspan="${rs.length + 1}" class="muted">No differences.</td></tr>`}</tbody>`;
   }
 
@@ -265,6 +276,16 @@
     window.scrollTo(0, 0);
   });
   $("clear").addEventListener("click", () => { selected = []; sync(); });
+  $("copyLink").addEventListener("click", async () => {
+    const b = $("copyLink");
+    try {
+      await navigator.clipboard.writeText(location.href);
+      b.textContent = "Copied ✓";
+      setTimeout(() => { b.textContent = "Copy link"; }, 1500);
+    } catch {
+      prompt("Copy this link", location.href); // no clipboard access (e.g. file://)
+    }
+  });
   $("back").addEventListener("click", () => { location.hash = ""; });
   $("diffOnly").addEventListener("change", renderTable);
   window.addEventListener("hashchange", readHash);

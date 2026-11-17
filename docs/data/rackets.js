@@ -49,12 +49,27 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 322, swingweightType: "strung", stiffness: 67, beam: "24/26.5/24.5", length: 27, pattern: "16x19",
     colors: ["#1e63b5", "#0f1f3a"],
     image: "img/wilson-ultra-100-v5.jpg" },
+  { id: "wilson-ultra-99-pro-v5", brand: "Wilson", model: "Ultra 99 Pro V5",
+    // unstrung weight/balance from retailer listings of Wilson's spec (wilson.com blocks automated access); beam from Tennis Warehouse
+    headSize: 99, weight: 305, balance: 32.5, swingweight: 330, swingweightType: "strung", stiffness: 69, beam: "22/23.5/21.5", length: 27, pattern: "16x18",
+    colors: ["#1e63b5", "#0f1f3a"],
+    image: "img/wilson-ultra-99-pro-v5.jpg" },
+  { id: "wilson-rf-01-pro", brand: "Wilson", model: "RF 01 Pro",
+    // unstrung weight/balance from retailer listings of Wilson's spec (wilson.com blocks automated access); beam from Tennis Warehouse
+    headSize: 98, weight: 320, balance: 31.5, swingweight: 331, swingweightType: "strung", stiffness: 67, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/wilson-rf-01-pro.jpg" },
 
   // ---- Head (head.com listings; photos from Tennis Warehouse) ----
   { id: "head-speed-mp-2026", brand: "Head", model: "Speed MP 2026",
     headSize: 100, weight: 300, balance: 32.0, swingweight: 329, swingweightType: "strung", stiffness: 60, beam: "23", length: 27, pattern: "16x19",
     colors: ["#f0f0f0", "#1a1a1a"],
     image: "img/head-speed-mp-2026.jpg" },
+  { id: "head-speed-mp-legend-2025", brand: "Head", model: "Speed MP Legend 2025",
+    // unstrung weight/balance and beam from retailer listings of Head's spec (head.com blocks automated access)
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 329, swingweightType: "strung", stiffness: 60, beam: "23", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/head-speed-mp-legend-2025.jpg" },
   { id: "head-extreme-mp-2026", brand: "Head", model: "Extreme MP 2026",
     headSize: 100, weight: 300, balance: 32.0, swingweight: 318, swingweightType: "strung", stiffness: 67, beam: "23/26/21", length: 27, pattern: "16x19",
     colors: ["#b8d62a", "#1a1a1a"],
@@ -100,5 +115,15 @@ window.RACKETS = [
   { id: "dunlop-cx-200-2027", brand: "Dunlop", model: "CX 200 (2027)",
     headSize: 98, weight: 305, balance: 31.5, swingweight: 316, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
     colors: ["#d0202a", "#1b1b1b"],
-    image: "img/dunlop-cx-200-2027.jpg" }
+    image: "img/dunlop-cx-200-2027.jpg" },
+
+  // ---- Mizuno (usa.mizuno.com spec tables; photos from Tennis Warehouse) ----
+  { id: "mizuno-acrospeed-300", brand: "Mizuno", model: "Acrospeed 300",
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 324, swingweightType: "strung", stiffness: 69, beam: "24/26/21.5/21", length: 27, pattern: "16x19",
+    colors: ["#1f5fbf", "#1a1a1a"],
+    image: "img/mizuno-acrospeed-300.jpg" },
+  { id: "mizuno-acrostrike-305", brand: "Mizuno", model: "Acrostrike 305",
+    headSize: 98, weight: 305, balance: 32.5, swingweight: 325, swingweightType: "strung", stiffness: 63, beam: "21/23/22/22", length: 27, pattern: "16x19",
+    colors: ["#c62828", "#1a1a1a"],
+    image: "img/mizuno-acrostrike-305.jpg" }
 ];

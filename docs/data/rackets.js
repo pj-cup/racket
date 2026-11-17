@@ -4,22 +4,22 @@
 // swingweight kg·cm², with swingweightType "unstrung" | "strung" (brands publish different ones — not directly comparable).
 // null = the brand doesn't publish it (shown as "—"); never guessed.
 //
-// image:  official product photo (brand CDN), or "img/<file>" relative to docs/. Without it (or if it fails) an SVG is drawn.
+// image:  "img/<file>" relative to docs/ (official product photo, saved locally). Without it (or if it fails) an SVG is drawn.
 // colors: [frame, grip] for the drawn SVG only.
 window.RACKETS = [
   // ---- Babolat (babolat.com spec sheets) ----
   { id: "babolat-pure-aero-gen9", brand: "Babolat", model: "Pure Aero Gen9",
     headSize: 100, weight: 300, balance: 32.1, swingweight: 290, swingweightType: "unstrung", stiffness: 69, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#f2c400", "#1b1b1b"],
-    image: "https://media.babolat.com/image/upload/f_auto,q_auto,c_pad,w_600,h_600/v1739969375/Product_Media/2026/Tennis/RACQUETS/Expert/101569-PURE_AERO_GEN9-100-1-Face.png" },
+    image: "img/babolat-pure-aero-gen9.png" },
   { id: "babolat-pure-drive-gen11", brand: "Babolat", model: "Pure Drive Gen11",
     headSize: 100, weight: 300, balance: 32.0, swingweight: 290, swingweightType: "unstrung", stiffness: 72, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#1f5fbf", "#111827"],
-    image: "https://media.babolat.com/image/upload/f_auto,q_auto,c_pad,w_600,h_600/v1707748921/Product_Media/2025/Tennis/Racquets/Expert/101552-PD_GEN11_STRUNG-100-1-Face.png" },
+    image: "img/babolat-pure-drive-gen11.png" },
   { id: "babolat-pure-strike-100-gen4", brand: "Babolat", model: "Pure Strike 100 Gen4",
     headSize: 100, weight: 300, balance: 32.0, swingweight: 295, swingweightType: "unstrung", stiffness: 68, beam: "21/23/21", length: 27, pattern: "16x19",
     colors: ["#9aa0a8", "#d8382e"],
-    image: "https://media.babolat.com/image/upload/f_auto,q_auto,c_pad,w_600,h_600/v1730726196/Product_Media/2025/Tennis/Racquets/Expert/101579-PS_100_CARBON_GREY-3018-1-Face.png" },
+    image: "img/babolat-pure-strike-100-gen4.png" },
 
   // ---- Wilson (wilson.com listings; site blocks automated access, so no photos yet) ----
   { id: "wilson-pro-staff-97-v14", brand: "Wilson", model: "Pro Staff 97 V14",
@@ -57,15 +57,15 @@ window.RACKETS = [
   { id: "yonex-ezone-98-8th", brand: "Yonex", model: "EZONE 98 (8th gen)",
     headSize: 98, weight: 305, balance: 31.5, swingweight: null, swingweightType: null, stiffness: null, beam: "23.8/24.5/19.5", length: 27, pattern: "16x19",
     colors: ["#1d4fb8", "#0c1f4a"],
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_08ez98_839-1.jpg" },
+    image: "img/yonex-ezone-98-8th.jpg" },
   { id: "yonex-vcore-98-8th", brand: "Yonex", model: "VCORE 98 (8th gen)",
     headSize: 98, weight: 305, balance: 31.5, swingweight: null, swingweightType: null, stiffness: null, beam: "23/23.5/22", length: 27, pattern: "16x19",
     colors: ["#b3122e", "#1a1a1a"],
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_08vc98_338-1.jpg" },
+    image: "img/yonex-vcore-98-8th.jpg" },
   { id: "yonex-percept-97", brand: "Yonex", model: "Percept 97",
     headSize: 97, weight: 310, balance: 31.0, swingweight: null, swingweightType: null, stiffness: null, beam: "21/21/21", length: 27, pattern: "16x19",
     colors: ["#5b6b3a", "#1a1a1a"],
-    image: "https://www.yonex.com/media/catalog/product/a/l/all_01pe97_472-1_1.png?quality=80&fit=bounds&height=819&width=600" },
+    image: "img/yonex-percept-97.png" },
 
   // ---- Tecnifibre (b2b.tecnifibre.com spec sheet; only close-up photos available) ----
   { id: "tecnifibre-tf40-305-16m-v3", brand: "Tecnifibre", model: "TF-40 305 16M V3",
@@ -78,5 +78,5 @@ window.RACKETS = [
   { id: "dunlop-cx-200-2027", brand: "Dunlop", model: "CX 200 (2027)",
     headSize: 98, weight: 305, balance: 31.5, swingweight: 316, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
     colors: ["#d0202a", "#1b1b1b"],
-    image: "https://us.dunlopsports.com/on/demandware.static/-/Sites-masterCatalog_DunlopSports/default/dw1a1e48b6/images/large/10380455_CX200_1.jpg" }
+    image: "img/dunlop-cx-200-2027.jpg" }
 ];

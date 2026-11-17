@@ -82,7 +82,7 @@
       .map(k => FIELDS.find(f => f.key === k).fmt(r)).join(" · ");
     $("zoomPic").className = "zoom-pic" + (r.image ? " photo" : "");
     $("zoomPic").innerHTML = r.image
-      ? `<img src="${esc(r.image.replace(/w_600,h_600/, "w_1400,h_1400"))}" alt="${esc(r.brand + " " + r.model)}" data-id="${esc(r.id)}" referrerpolicy="no-referrer">`
+      ? `<img src="${esc(r.image)}" alt="${esc(r.brand + " " + r.model)}" data-id="${esc(r.id)}" referrerpolicy="no-referrer">`
       : racketImage(r, true);
     $("zoomTitle").innerHTML = `<span class="brand">${esc(r.brand)}</span>${esc(r.model)}`;
     $("zoomMeta").innerHTML = `${esc(keySpecs)}`;

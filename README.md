@@ -1,6 +1,12 @@
 # PJ Racket
 Browse tennis racket specs and compare rackets side by side.
 
+## Features
+- Search, filter by brand and head size, and sort by any spec.
+- Thumbnail or list view. The site remembers your choice.
+- Full-screen photo viewer with zoom and pan.
+- Compare rackets side by side. The comparison link is shareable (`#compare=<id>,<id>`).
+
 ## View it
 No build step. Open `docs/index.html` in a browser, or serve the folder:
 

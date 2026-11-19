@@ -3,6 +3,7 @@
 Static site for browsing and comparing tennis rackets. See README.md for the layout.
 
 ## Conventions
+- To add rackets, use the `add-racket` skill (`.claude/skills/add-racket/SKILL.md`).
 - `docs/` is the site root (wwwroot). There is no build step and there are no dependencies. Keep `docs/data/rackets.js` a plain `window.RACKETS = [...]` script so `file://` works.
 - One object per racket in `rackets.js`, grouped by brand, with a source comment on each brand section.
 - **Never guess a spec.** If the source doesn't publish it, use `null`. Note any per-racket source exception in a comment next to that racket.

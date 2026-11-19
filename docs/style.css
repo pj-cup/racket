@@ -261,7 +261,7 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 .zoom-caption .brand { display: block; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: #a9b2a6; font-weight: 500; }
 .zoom-caption p { margin: 4px 0 0; color: #a9b2a6; }
 .zoom-close {
-  position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%;
+  position: fixed; z-index: 2; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 44px; height: 44px; border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(0, 0, 0, 0.4); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer;
 }
 

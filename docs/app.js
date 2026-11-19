@@ -398,6 +398,13 @@
   });
   $("back").addEventListener("click", () => { location.hash = ""; });
   $("diffOnly").addEventListener("change", renderTable);
+  // "Data only" hides photos, hints and extras so the table fits on one screen. Remembered per browser.
+  const setDataOnly = on => { $("dataOnly").checked = on; $("compare").classList.toggle("data-only", on); };
+  try { setDataOnly(localStorage.getItem("dataOnly") === "1"); } catch {}
+  $("dataOnly").addEventListener("change", () => {
+    setDataOnly($("dataOnly").checked);
+    try { localStorage.setItem("dataOnly", $("dataOnly").checked ? "1" : "0"); } catch {}
+  });
   window.addEventListener("hashchange", readHash);
   // Photo failed (moved, hotlink-blocked, offline) → fall back to the drawn racket.
   document.addEventListener("error", e => {

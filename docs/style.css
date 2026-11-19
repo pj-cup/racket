@@ -229,6 +229,12 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
     var(--ball);
   box-shadow: 0 0 0 1.5px var(--ball-edge), 0 0 0 3.5px var(--surface);
 }
+/* "Data only": just the values, compact, so the whole table fits on one screen. */
+.data-only thead .pic, .data-only tbody th .hint, .data-only tbody th .range,
+.data-only td .delta, .data-only td .tag-line, .data-only .track { display: none; }
+.data-only th, .data-only td { padding-top: 6px; padding-bottom: 6px; }
+.data-only tr.group th { padding-top: 4px; padding-bottom: 4px; }
+.data-only td .val { font-size: 1rem; }
 .remove { margin-left: 6px; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
 
 /* Full-screen viewer */

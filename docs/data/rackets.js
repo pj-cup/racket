@@ -138,6 +138,12 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 329, swingweightType: "strung", stiffness: 60, beam: "23", length: 27, pattern: "16x19",
     colors: ["#1a1a1a", "#1a1a1a"],
     image: "img/head-speed-mp-legend-2025.webp" },
+  { id: "head-speed-sinner-2026", brand: "Head", model: "Speed Sinner 2026",
+    // unstrung weight/balance and beam from Head's spec via retailer listings (head.com blocks automated access);
+    // length from Tennis Warehouse (Head hasn't published it)
+    headSize: 100, weight: 304, balance: 32.4, swingweight: 340, swingweightType: "strung", stiffness: 63, beam: "22", length: 27, pattern: "16x19",
+    colors: ["#f0f0f0", "#1a1a1a"],
+    image: "img/head-speed-sinner-2026.webp" },
   { id: "head-extreme-mp-2026", brand: "Head", model: "Extreme MP 2026",
     headSize: 100, weight: 300, balance: 32.0, swingweight: 318, swingweightType: "strung", stiffness: 67, beam: "23/26/21", length: 27, pattern: "16x19",
     colors: ["#b8d62a", "#1a1a1a"],

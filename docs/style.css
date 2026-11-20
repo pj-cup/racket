@@ -135,6 +135,7 @@ button.pic:disabled { cursor: not-allowed; opacity: 0.55; }
 .card h3 { margin: 0; font-size: 1.05rem; }
 .specs { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 0.9rem; }
 .specs dt { color: var(--muted); }
+.icon { display: inline-block; width: 1.1em; height: 1.1em; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .specs dd { margin: 0; font-variant-numeric: tabular-nums; }
 
 /* Thumbnail / list switch */

@@ -19,23 +19,23 @@
   // delta(r, a): difference from racket A, as text (compare table only).
   const signed = (d, unit) => (d > 0 ? "+" : "−") + Math.abs(+d.toFixed(1)) + unit;
   const FIELDS = [
-    { key: "headSize", emoji: "🎯",  label: "Head size",  unit: " sq in", num: r => r.headSize,
+    { key: "headSize", icon: "target",  label: "Head size",  unit: " sq in", num: r => r.headSize,
       hint: "Bigger = more forgiving, less precise", extremes: ["Biggest", "Smallest"], delta: (r, a) => signed(r.headSize - a.headSize, " sq in") },
-    { key: "weight", emoji: "🏋️",    label: "Weight",     unit: " g", num: r => r.weight,
+    { key: "weight", icon: "dumbbell",    label: "Weight",     unit: " g", num: r => r.weight,
       hint: "Unstrung. Heavier = more stable, more effort", extremes: ["Heaviest", "Lightest"], delta: (r, a) => signed(r.weight - a.weight, " g") },
-    { key: "balance", emoji: "⚖️",   label: "Balance",    fmt: fmtBalance, num: r => balancePts(r), scale: v => ptsLabel(Math.round(v)),
+    { key: "balance", icon: "scale",   label: "Balance",    fmt: fmtBalance, num: r => balancePts(r), scale: v => ptsLabel(Math.round(v)),
       sub: r => has(r.balance) ? `${r.balance.toFixed(1)} cm` : "",
       hint: "Unstrung. More pts HL = quicker hands, less plow", extremes: ["Most HL", "Least HL"],
       delta: (r, a) => { const d = Math.round(balancePts(r)) - Math.round(balancePts(a)); return d === 0 ? "" : `${pts(Math.abs(d))} ${d > 0 ? "more" : "less"} HL`; } },
     // Every racket uses Tennis Warehouse strung swing weight, so they compare directly (group kept as a guard).
-    { key: "swingweight", emoji: "💨", label: "Swing weight", fmt: r => has(r.swingweight) ? `${r.swingweight}` : NA,
+    { key: "swingweight", icon: "wind", label: "Swing weight", fmt: r => has(r.swingweight) ? `${r.swingweight}` : NA,
       num: r => r.swingweight, group: r => r.swingweightType, extremes: ["Highest", "Lowest"],
       hint: "Strung. Higher = more power and stability, slower to swing", delta: (r, a) => signed(r.swingweight - a.swingweight, "") },
-    { key: "stiffness", emoji: "💪", label: "Stiffness",  unit: " RA", num: r => r.stiffness,
+    { key: "stiffness", icon: "biceps-flexed", label: "Stiffness",  unit: " RA", num: r => r.stiffness,
       hint: "Higher = more power, less comfort", extremes: ["Stiffest", "Softest"], delta: (r, a) => signed(r.stiffness - a.stiffness, " RA") },
-    { key: "pattern", emoji: "🕸️",   label: "String pattern", hint: "Open (16x19) = more spin; dense (18x20) = more control" },
-    { key: "beam", emoji: "📐",      label: "Beam",       unit: " mm", hint: "Thicker = more power, less feel" },
-    { key: "length", emoji: "📏",    label: "Length",     unit: " in", num: r => r.length, extremes: ["Longest", "Shortest"], delta: (r, a) => signed(r.length - a.length, " in") },
+    { key: "pattern", icon: "grid-3x3",   label: "String pattern", hint: "Open (16x19) = more spin; dense (18x20) = more control" },
+    { key: "beam", icon: "triangle-right",      label: "Beam",       unit: " mm", hint: "Thicker = more power, less feel" },
+    { key: "length", icon: "ruler",    label: "Length",     unit: " in", num: r => r.length, extremes: ["Longest", "Shortest"], delta: (r, a) => signed(r.length - a.length, " in") },
   ];
   const TABLE_GROUPS = [
     { name: "Feel",  keys: ["weight", "balance", "swingweight", "stiffness"] },
@@ -55,6 +55,18 @@
   let selected = [];
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // Spec icons: single-color line icons from Lucide (lucide.dev, ISC), inlined so they take the text color.
+  const ICONS = {
+    "target": '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    "dumbbell": '<path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/>',
+    "scale": '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+    "wind": '<path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>',
+    "biceps-flexed": '<path d="M12.409 13.017A5 5 0 0 1 22 15c0 3.866-4 7-9 7-4.077 0-8.153-.82-10.371-2.462-.426-.316-.631-.832-.62-1.362C2.118 12.723 2.627 2 10 2a3 3 0 0 1 3 3 2 2 0 0 1-2 2c-1.105 0-1.64-.444-2-1"/><path d="M15 14a5 5 0 0 0-7.584 2"/><path d="M9.964 6.825C8.019 7.977 9.5 13 8 15"/>',
+    "grid-3x3": '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/>',
+    "triangle-right": '<path d="M22 18a2 2 0 0 1-2 2H3c-1.1 0-1.3-.6-.4-1.3L20.4 4.3c.9-.7 1.6-.4 1.6.7Z"/>',
+    "ruler": '<path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/>',
+  };
+  const emo = f => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS[f.icon]}</svg>`;
 
   // ---------- Racket image ----------
   // Real photo if `image` is set, else an SVG drawn from specs: head scaled by head size,
@@ -109,13 +121,13 @@
     const r = byId.get(id);
     if (!r) return;
     const keySpecs = ["headSize", "weight", "balance", "pattern"]
-      .map(k => { const f = FIELDS.find(f => f.key === k); return `${f.emoji} ${f.fmt(r)}`; }).join(" · ");
+      .map(k => { const f = FIELDS.find(f => f.key === k); return `${emo(f)} ${esc(f.fmt(r))}`; }).join(" · ");
     $("zoomPic").className = "zoom-pic" + (r.image ? " photo" : "");
     $("zoomPic").innerHTML = r.image
       ? `<img src="${esc(r.image)}" alt="${esc(r.brand + " " + r.model)}" data-id="${esc(r.id)}" referrerpolicy="no-referrer">`
       : racketImage(r, true);
     $("zoomTitle").innerHTML = `<span class="brand">${esc(r.brand)}</span>${esc(r.model)}`;
-    $("zoomMeta").innerHTML = `${esc(keySpecs)}`;
+    $("zoomMeta").innerHTML = keySpecs;
     $("zoom").showModal();
     zoomTo(1);
   }
@@ -249,7 +261,7 @@
     $("grid").innerHTML = list.map(r => {
       const on = selected.includes(r.id);
       const rows = FIELDS.filter(f => CARD_FIELDS.includes(f.key))
-        .map(f => `<dt>${f.emoji} ${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
+        .map(f => `<dt>${emo(f)} ${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
       return `<article class="card${on ? " selected" : ""}">
         ${browsePic(r, "", on, full)}
         <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3></div>
@@ -341,7 +353,7 @@
         }
         return `<td>${html}</td>`;
       }).join("");
-      return `<tr class="${differs ? "" : "same"}"><th scope="row"><span class="emo">${f.emoji} </span>${f.label}${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ""}${range}</th>${cells}</tr>`;
+      return `<tr class="${differs ? "" : "same"}"><th scope="row"><span class="emo">${emo(f)} </span>${f.label}${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ""}${range}</th>${cells}</tr>`;
     };
 
     const body = TABLE_GROUPS.map(g => {

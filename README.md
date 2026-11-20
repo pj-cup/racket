@@ -16,7 +16,7 @@ python3 -m http.server -d docs
 
 ## Layout
 - `docs/`: the site root (served as-is).
-  - `index.html`, `app.js`, `style.css`: the page.
+  - `index.html`, `app.js`, `style.css`: the page. Spec icons are [Lucide](https://lucide.dev) line icons (ISC), inlined in `app.js`.
   - `data/rackets.js`: all racket data, loaded as a plain script so the page also works from `file://`.
   - `img/<racket-id>.<ext>`: product photos. A racket without one gets a drawn SVG instead.
 

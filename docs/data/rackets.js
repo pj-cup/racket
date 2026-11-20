@@ -71,6 +71,24 @@ window.RACKETS = [
     headSize: 98, weight: 305, balance: 32.0, swingweight: 325, swingweightType: "strung", stiffness: 61, beam: "21.5/21.5/20.5", length: 27, pattern: "18x20",
     colors: ["#3f6b3a", "#1a1a1a"],
     image: "img/wilson-blade-98-18x20-v10.webp" },
+  { id: "wilson-blade-98-16x19-v7", brand: "Wilson", model: "Blade 98 16x19 V7",
+    // unstrung weight/balance and beam from a retailer listing of Wilson's spec (tennisnuts.com, WR013610U; wilson.com blocks automated access);
+    // Tennis Warehouse lists a 21mm beam. Swingweight/stiffness from the Tennis Warehouse playtest review (WB98R; product page retired)
+    headSize: 98, weight: 305, balance: 32.0, swingweight: 328, swingweightType: "strung", stiffness: 62, beam: "20.6", length: 27, pattern: "16x19",
+    colors: ["#4a5a3a", "#1a1a1a"],
+    image: "img/wilson-blade-98-16x19-v7.jpg" },
+  { id: "wilson-blade-98-16x19-v8", brand: "Wilson", model: "Blade 98 16x19 V8",
+    // unstrung weight/balance and beam from Wilson's spec as listed by tenniscompanion.org (wilson.com and Shopify retailers block automated access);
+    // swingweight/stiffness from the Tennis Warehouse playtest review (16BV8R; product page retired)
+    headSize: 98, weight: 305, balance: 32.0, swingweight: 320, swingweightType: "strung", stiffness: 61, beam: "21", length: 27, pattern: "16x19",
+    colors: ["#8c5a3c", "#1a1a1a"],
+    image: "img/wilson-blade-98-16x19-v8.jpg" },
+  { id: "wilson-blade-98-16x19-v9", brand: "Wilson", model: "Blade 98 16x19 V9",
+    // unstrung weight/balance from retailer listings of Wilson's spec (merchantoftennis.com; wilson.com blocks automated access);
+    // beam from Tennis Warehouse (Merchant of Tennis lists 20.6mm)
+    headSize: 98, weight: 305, balance: 32.0, swingweight: 324, swingweightType: "strung", stiffness: 62, beam: "21", length: 27, pattern: "16x19",
+    colors: ["#2f5a3a", "#1a1a1a"],
+    image: "img/wilson-blade-98-16x19-v9.webp" },
   { id: "wilson-clash-100-v3", brand: "Wilson", model: "Clash 100 V3",
     // unstrung balance from retailer listings of Wilson's spec (wilson.com blocks automated access)
     headSize: 100, weight: 292.5, balance: 31.0, swingweight: 308, swingweightType: "strung", stiffness: 54, beam: "24.5", length: 27, pattern: "16x19",

@@ -104,6 +104,29 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .pic:has(img) { background: #ffffff; padding: 8px; } /* product shots are made for a light background */
 .pic svg, .pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .pic.small { width: 100%; max-width: 160px; height: 84px; margin-bottom: 8px; }
+/* Browse photos: the photo itself picks the racket for compare; a corner magnifier opens the viewer. */
+.pic-wrap { position: relative; }
+button.pic { box-sizing: border-box; border: 0; width: 100%; font: inherit; color: inherit; cursor: pointer; position: relative; }
+button.pic:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.pic:not(:has(img)) { padding: 0; }
+button.pic:disabled { cursor: not-allowed; opacity: 0.55; }
+.pick .badge {
+  position: absolute; top: 6px; left: 6px; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 15px; font-weight: 700; line-height: 1;
+  background: var(--surface); color: var(--text); border: 1px solid var(--line);
+  opacity: 0; transition: opacity 0.12s;
+}
+.pick:hover:not(:disabled) .badge, .pick:focus-visible .badge { opacity: 1; }
+.pick[aria-pressed="true"] .badge { opacity: 1; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+@media (hover: none) { .pick:not(:disabled) .badge { opacity: 1; } }
+.zoom-btn {
+  position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; padding: 0; border-radius: 50%;
+  display: grid; place-items: center; cursor: zoom-in;
+  background: color-mix(in srgb, var(--surface) 85%, transparent); color: var(--text); border: 1px solid var(--line);
+}
+.zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
+.zoom-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.zoom-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 /* Compare header: photos are tall two-view shots, so lay them on their side to fill the wide box
    (head left, handle right). */
 .pic.small:has(img) { container-type: size; }
@@ -128,7 +151,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 /* List view: one row per racket. */
 .list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .list-head, .row {
-  display: grid; grid-template-columns: 120px minmax(150px, 1.4fr) minmax(0, 6fr) 108px;
+  display: grid; grid-template-columns: 120px minmax(150px, 1.4fr) minmax(0, 6fr);
   gap: 12px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line);
 }
 .row:last-child { border-bottom: 0; }
@@ -143,23 +166,26 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .sort-head:hover, .sort-head.on { color: var(--text); }
 .sort-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 .sort-head .arrow { font-size: 0.7em; color: var(--accent); margin-left: 3px; }
-.row .pic.small { height: 56px; max-width: 120px; margin: 0; }
+.row .pic-wrap { max-width: 120px; }
+.row .pic.small { height: 56px; max-width: none; margin: 0; }
+.row .pick .badge { top: 3px; left: 3px; width: 20px; height: 20px; font-size: 12px; }
+.row .zoom-btn { top: 3px; right: 3px; width: 22px; height: 22px; }
+.row .zoom-btn svg { width: 13px; height: 13px; }
 .row .brand { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .row h3 { margin: 0; font-size: 1rem; }
 .row .spec { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.92rem; }
-.row .btn { padding: 6px 10px; white-space: nowrap; }
 .row.selected { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--ball); }
 @media (max-width: 900px) {
-  .list-head, .row { grid-template-columns: 96px minmax(120px, 1fr) minmax(0, 4fr) 100px; }
+  .list-head, .row { grid-template-columns: 96px minmax(120px, 1fr) minmax(0, 4fr); }
   .list-head .row-specs .sort-head { font-size: 0.68rem; }
 }
 /* Phones: no header; specs wrap under the name with their own labels. */
 @media (max-width: 640px) {
   .list-head { display: none; }
-  .row { grid-template-columns: 84px 1fr auto; gap: 8px 10px; padding: 10px; }
-  .row .pic.small { height: 52px; grid-row: span 2; align-self: start; }
-  .row .row-specs { grid-column: 2 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 8px; }
-  .row .btn { grid-column: 3; grid-row: 1; align-self: start; }
+  .row { grid-template-columns: 84px 1fr; gap: 8px 10px; padding: 10px; }
+  .row .pic-wrap { grid-row: span 2; align-self: start; }
+  .row .pic.small { height: 52px; }
+  .row .row-specs { grid-column: 2; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 8px; }
   .row .spec { font-size: 0.85rem; }
   .row .spec::before { content: attr(data-label); display: block; font-size: 0.7rem; color: var(--muted); }
 }

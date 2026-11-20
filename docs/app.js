@@ -90,6 +90,20 @@
   const picBox = (r, cls) =>
     `<div class="pic ${cls}" data-zoom="${esc(r.id)}" role="button" tabindex="0" aria-label="View ${esc(r.brand + " " + r.model)} full screen">${racketImage(r, false, cls === "small")}</div>`;
 
+  // Browse picture: clicking the photo picks the racket for compare; the magnifier opens the full-screen viewer.
+  const browsePic = (r, cls, on, full) => {
+    const name = esc(r.brand + " " + r.model);
+    return `<div class="pic-wrap">
+      <button type="button" class="pic pick ${cls}" data-id="${esc(r.id)}" aria-pressed="${on}"
+        aria-label="${on ? `Remove ${name} from compare` : `Add ${name} to compare`}"${!on && full ? ` disabled title="Up to 4 rackets"` : ""}>
+        ${racketImage(r, false, cls === "small")}<span class="badge" aria-hidden="true">${on ? "✓" : "+"}</span>
+      </button>
+      <button type="button" class="zoom-btn" data-zoom="${esc(r.id)}" aria-label="View ${name} full screen" title="Zoom">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14M5 7h4M7 5v4"/></svg>
+      </button>
+    </div>`;
+  };
+
   // ---------- Full-screen viewer ----------
   function openZoom(id) {
     const r = byId.get(id);
@@ -227,7 +241,7 @@
 
   function renderGrid() {
     const list = filtered();
-    $("count").textContent = `${list.length} of ${data.length} rackets`;
+    $("count").textContent = `${list.length} of ${data.length} rackets · Click a photo to compare`;
     const full = selected.length >= MAX;
     $("grid").className = view;
     document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
@@ -237,12 +251,9 @@
       const rows = FIELDS.filter(f => CARD_FIELDS.includes(f.key))
         .map(f => `<dt>${f.emoji} ${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
       return `<article class="card${on ? " selected" : ""}">
-        ${picBox(r, "")}
+        ${browsePic(r, "", on, full)}
         <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3></div>
         <dl class="specs">${rows}</dl>
-        <button class="btn ${on ? "on" : "ghost"}" data-id="${esc(r.id)}" ${!on && full ? "disabled title=\"Up to 4 rackets\"" : ""}>
-          ${on ? "✓ Added to compare" : "+ Compare"}
-        </button>
       </article>`;
     }).join("") || `<p class="muted">No rackets match.</p>`;
   }
@@ -257,17 +268,14 @@
         on ? ` aria-label="Sorted by ${esc(text)}, ${sortDir > 0 ? "ascending" : "descending"}"` : ""}>${esc(text)}${on ? `\u2060<span class="arrow" aria-hidden="true">${arrow}</span>` : ""}</button>`;
     };
     const head = `<div class="list-head"><span></span>${th("brand", "Racket")}<div class="row-specs">${
-      fields.map(f => th(f.key, f.label)).join("")}</div><span></span></div>`;
+      fields.map(f => th(f.key, f.label)).join("")}</div></div>`;
     $("grid").innerHTML = head + list.map(r => {
       const on = selected.includes(r.id);
       const specs = fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(r))}</div>`).join("");
       return `<article class="row${on ? " selected" : ""}">
-        ${picBox(r, "small")}
+        ${browsePic(r, "small", on, full)}
         <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3></div>
         <div class="row-specs">${specs}</div>
-        <button class="btn ${on ? "on" : "ghost"}" data-id="${esc(r.id)}" ${!on && full ? "disabled title=\"Up to 4 rackets\"" : ""}>
-          ${on ? "✓ Added" : "+ Compare"}
-        </button>
       </article>`;
     }).join("");
   }
@@ -395,7 +403,10 @@
     const h = e.target.closest("button[data-sort]");
     if (h) return sortBy(h.dataset.sort);
     const b = e.target.closest("button[data-id]");
-    if (b) toggle(b.dataset.id);
+    if (!b) return;
+    const refocus = document.activeElement === b; // the re-render replaces the button
+    toggle(b.dataset.id);
+    if (refocus) $("grid").querySelector(`.pick[data-id="${CSS.escape(b.dataset.id)}"]`)?.focus();
   });
   document.addEventListener("click", e => {
     const b = e.target.closest("button[data-remove]");
@@ -431,7 +442,7 @@
     const img = e.target;
     if (img.tagName !== "IMG" || !img.dataset.id) return;
     const pic = img.closest(".pic, .zoom-pic");
-    if (pic) pic.innerHTML = racketImage(byId.get(img.dataset.id), true);
+    if (pic) img.outerHTML = racketImage(byId.get(img.dataset.id), true); // keeps the pick badge
   }, true);
 
   readHash();

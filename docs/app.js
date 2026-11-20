@@ -204,10 +204,21 @@
       }
       return true;
     });
-    list.sort((a, b) => sort === "brand"
-      ? (a.brand + a.model).localeCompare(b.brand + b.model)
-      : !has(a[sort]) ? 1 : !has(b[sort]) ? -1 : a[sort] - b[sort]); // unpublished values last
+    const cmp = sort === "brand" ? (a, b) => (a.brand + a.model).localeCompare(b.brand + b.model)
+      : sort === "pattern" ? (a, b) => a.pattern.localeCompare(b.pattern, undefined, { numeric: true })
+      : sort === "balance" ? (a, b) => balancePts(a) - balancePts(b) // by the points shown, which also depend on length
+      : (a, b) => a[sort] - b[sort];
+    const key = sort === "brand" ? "model" : sort;
+    list.sort((a, b) => !has(a[key]) ? (has(b[key]) ? 1 : 0) : !has(b[key]) ? -1 : sortDir * cmp(a, b)); // unpublished values last
     return list;
+  }
+
+  // Sort direction: 1 ascending, -1 descending. List view's column headers toggle it; the Sort menu resets it.
+  let sortDir = 1;
+  function sortBy(key) {
+    if ($("sort").value === key) sortDir = -sortDir;
+    else { $("sort").value = key; sortDir = 1; }
+    renderGrid();
   }
 
   // Browse view: "grid" (thumbnails) or "list" (one row per racket). Remembered per browser.
@@ -239,8 +250,14 @@
   function renderList(list, full) {
     const fields = FIELDS.filter(f => CARD_FIELDS.includes(f.key));
     if (!list.length) { $("grid").innerHTML = `<p class="muted">No rackets match.</p>`; return; }
-    const head = `<div class="list-head" aria-hidden="true"><span></span><span>Racket</span><div class="row-specs">${
-      fields.map(f => `<span>${f.emoji} ${f.label}</span>`).join("")}</div><span></span></div>`;
+    const sort = $("sort").value;
+    const th = (key, text) => {
+      const on = sort === key, arrow = on ? (sortDir > 0 ? "▲" : "▼") : "";
+      return `<button type="button" class="sort-head${on ? " on" : ""}" data-sort="${key}" title="Sort by ${esc(text)}"${
+        on ? ` aria-label="Sorted by ${esc(text)}, ${sortDir > 0 ? "ascending" : "descending"}"` : ""}>${esc(text)}${on ? `\u2060<span class="arrow" aria-hidden="true">${arrow}</span>` : ""}</button>`;
+    };
+    const head = `<div class="list-head"><span></span>${th("brand", "Racket")}<div class="row-specs">${
+      fields.map(f => th(f.key, f.label)).join("")}</div><span></span></div>`;
     $("grid").innerHTML = head + list.map(r => {
       const on = selected.includes(r.id);
       const specs = fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(r))}</div>`).join("");
@@ -356,7 +373,8 @@
   }
 
   // ---------- Events ----------
-  ["q", "brand", "head", "sort"].forEach(id => $(id).addEventListener("input", renderGrid));
+  ["q", "brand", "head"].forEach(id => $(id).addEventListener("input", renderGrid));
+  $("sort").addEventListener("input", () => { sortDir = 1; renderGrid(); });
   document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.addEventListener("click", () => {
     view = b.dataset.view;
     try { localStorage.setItem("view", view); } catch {}
@@ -374,6 +392,8 @@
   // Click on the backdrop (the dialog itself, outside its content) closes it. Esc is built in.
   $("zoom").addEventListener("click", e => { if (e.target === $("zoom")) $("zoom").close(); });
   $("grid").addEventListener("click", e => {
+    const h = e.target.closest("button[data-sort]");
+    if (h) return sortBy(h.dataset.sort);
     const b = e.target.closest("button[data-id]");
     if (b) toggle(b.dataset.id);
   });

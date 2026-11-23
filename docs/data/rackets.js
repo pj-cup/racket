@@ -56,6 +56,13 @@ window.RACKETS = [
     headSize: 100, weight: 317, balance: 33.0, swingweight: 371, swingweightType: "strung", stiffness: 70, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#e040a0", "#1b1b1b"],
     image: "img/babolat-pure-aero-rafa-origin.jpg" },
+  { id: "babolat-pure-aero-rafa-2019", brand: "Babolat", model: "Pure Aero Rafa (2019)",
+    // Gen7-era Rafa cosmetic (orange/yellow/purple), no longer on babolat.com: unstrung weight/balance from retailer listings
+    // of Babolat's spec (Tradeinn, Tennis-Point); swingweight/stiffness from Tennis Warehouse (BPARR product page + BPARRreview).
+    // Identity matched on photo/colourway, head size, beam and pattern (TW stock number is blank, no Babolat code to compare)
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 324, swingweightType: "strung", stiffness: 67, beam: "23/26/23", length: 27, pattern: "16x19",
+    colors: ["#f28c1e", "#1b1b1b"],
+    image: "img/babolat-pure-aero-rafa-2019.jpg" },
 
   // ---- Wilson (wilson.com listings; photos from Tennis Warehouse) ----
   { id: "wilson-pro-staff-97-v14", brand: "Wilson", model: "Pro Staff 97 V14",

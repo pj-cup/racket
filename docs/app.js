@@ -333,7 +333,7 @@
   }
 
   // Browse view: "grid" (thumbnails) or "list" (one row per racket). Remembered per browser.
-  const VIEWS = ["grid", "list"];
+  const VIEWS = ["grid", "list", "map"];
   let view = "grid";
   try { const v = localStorage.getItem("view"); if (VIEWS.includes(v)) view = v; } catch {}
 
@@ -345,7 +345,7 @@
   function renderGrid() {
     const list = filtered();
     $("count").textContent = `${list.length - refAdded} of ${data.length} rackets` + (refAdded ? " + reference" : "") +
-      (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + " · Click a photo to compare";
+      (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + (view === "map" ? " · Click a dot to compare" : " · Click a photo to compare");
     const nRanges = activeRanges().length;
     $("moreCount").textContent = nRanges ? ` (${nRanges})` : "";
     writeBrowseHash();
@@ -357,6 +357,7 @@
     $("grid").className = view;
     document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
     if (view === "list") return renderList(list, full);
+    if (view === "map") return renderMap(list, full);
     $("grid").innerHTML = list.map(r => {
       const on = selected.includes(r.id);
       const rows = FIELDS.filter(f => CARD_FIELDS.includes(f.key))
@@ -389,6 +390,96 @@
         <div class="row-specs">${specs}</div>
       </article>`;
     }).join("");
+  }
+
+  // ---------- Spec map (scatter of two specs) ----------
+  // Axes cover every racket's range (not just the filtered ones), so dots keep their place as you filter.
+  const MAP_AXES = {
+    weight: "Weight (g, unstrung)", swingweight: "Swing weight (strung)", balance: "Balance (pts head-light, unstrung)",
+    stiffness: "Stiffness (RA)", headSize: "Head size (sq in)", length: "Length (in)",
+  };
+  let mapX = "weight", mapY = "swingweight";
+  function niceTicks(lo, hi, n) {
+    const raw = (hi - lo) / n, mag = 10 ** Math.floor(Math.log10(raw)), e = raw / mag;
+    const step = mag * (e < 1.5 ? 1 : e < 3 ? 2 : e < 7 ? 5 : 10);
+    const ticks = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) ticks.push(+v.toFixed(6));
+    return ticks;
+  }
+  const axisSelect = (axis, cur) => `<label>${axis.toUpperCase()} <select data-axis="${axis}" aria-label="${axis === "x" ? "Horizontal" : "Vertical"} axis">${
+    Object.entries(MAP_AXES).map(([k]) => `<option value="${k}"${k === cur ? " selected" : ""}>${esc(field(k).label)}</option>`).join("")}</select></label>`;
+
+  function renderMap(list, full) {
+    const fx = field(mapX), fy = field(mapY);
+    const shown = list.filter(r => has(fx.num(r)) && has(fy.num(r)));
+    const W = Math.max(300, $("grid").clientWidth), H = Math.round(Math.min(560, Math.max(320, W * 0.6)));
+    const narrow = W < 500;
+    const m = { l: narrow ? 46 : 58, r: 14, t: 14, b: 46 };
+    const dom = k => { const [lo, hi] = ranges[k]; const pad = (hi - lo) * 0.06 || 1; return [lo - pad, hi + pad]; };
+    const [x0, x1] = dom(mapX), [y0, y1] = dom(mapY);
+    const sx = v => m.l + ((v - x0) / (x1 - x0)) * (W - m.l - m.r);
+    const sy = v => H - m.b - ((v - y0) / (y1 - y0)) * (H - m.t - m.b);
+    const tickTxt = v => +v.toFixed(2);
+    const xt = niceTicks(x0, x1, narrow ? 4 : 7), yt = niceTicks(y0, y1, 6);
+    let g = xt.map(v => `<line class="grid-line" x1="${sx(v)}" x2="${sx(v)}" y1="${m.t}" y2="${H - m.b}"/><text class="tick" x="${sx(v)}" y="${H - m.b + 16}" text-anchor="middle">${tickTxt(v)}</text>`).join("")
+      + yt.map(v => `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}"/><text class="tick" x="${m.l - 8}" y="${sy(v) + 4}" text-anchor="end">${tickTxt(v)}</text>`).join("")
+      + `<text class="axis-title" x="${(m.l + W - m.r) / 2}" y="${H - 8}" text-anchor="middle">${esc(MAP_AXES[mapX])}</text>`
+      + `<text class="axis-title" transform="translate(13 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle">${esc(MAP_AXES[mapY])}</text>`;
+
+    // Rackets with the same two values would hide each other: fan them out in a small ring.
+    const pos = new Map(), groups = new Map();
+    shown.forEach(r => {
+      const k = `${fx.num(r).toFixed(3)}|${fy.num(r).toFixed(3)}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(r);
+    });
+    groups.forEach(rs => rs.forEach((r, i) => {
+      const rad = rs.length > 1 ? Math.min(10, 3 + rs.length) : 0, a = (2 * Math.PI * i) / rs.length - Math.PI / 2;
+      pos.set(r.id, [sx(fx.num(r)) + rad * Math.cos(a), sy(fy.num(r)) + rad * Math.sin(a)]);
+    }));
+
+    const ref = simRef;
+    const rank = r => selected.includes(r.id) || r === ref ? 1 : 0;
+    const dots = [...shown].sort((a, b) => rank(a) - rank(b)).map(r => {
+      const [x, y] = pos.get(r.id), i = selected.indexOf(r.id), on = i >= 0;
+      const name = `${r.brand} ${r.model}`;
+      const cls = "dot" + (on ? " on" : "") + (r === ref ? " ref" : "") + (!on && full ? " full" : "");
+      let label = "";
+      if (on || r === ref) {
+        const right = x < W - 170;
+        label = `<text class="dot-label" x="${x + (right ? 10 : -10)}" y="${y + 4}" text-anchor="${right ? "start" : "end"}">${on ? LETTERS[i] + " · " : ""}${esc(r.model)}</text>`;
+      }
+      return `<g class="${cls}" data-dot="${esc(r.id)}" tabindex="0" role="button" aria-pressed="${on}"${!on && full ? ' aria-disabled="true"' : ""}
+        aria-label="${esc(`${name}: ${fx.label} ${fx.fmt(r)}, ${fy.label} ${fy.fmt(r)}. ${on ? "Remove from" : "Add to"} compare`)}">
+        <circle class="hit" cx="${x}" cy="${y}" r="12"/>${r === ref ? `<circle class="ring" cx="${x}" cy="${y}" r="9"/>` : ""}
+        <circle class="mark" cx="${x}" cy="${y}" r="${on ? 6 : 4.5}"/>${on ? `<text class="dot-letter" x="${x}" y="${y + 3}" text-anchor="middle">${LETTERS[i]}</text>` : ""}${label}</g>`;
+    }).join("");
+
+    const missing = list.length - shown.length;
+    const legend = `<span class="key"><svg viewBox="0 0 12 12" aria-hidden="true"><circle class="mark" cx="6" cy="6" r="4"/></svg>Racket</span>`
+      + `<span class="key on"><svg viewBox="0 0 12 12" aria-hidden="true"><circle class="mark" cx="6" cy="6" r="5"/></svg>Picked for compare</span>`
+      + (ref ? `<span class="key ref"><svg viewBox="0 0 20 20" aria-hidden="true"><circle class="ring" cx="10" cy="10" r="8"/><circle class="mark" cx="10" cy="10" r="4"/></svg>Reference</span>` : "");
+    $("grid").innerHTML = `<div class="map-bar">${axisSelect("x", mapX)}${axisSelect("y", mapY)}<div class="map-legend">${legend}</div></div>
+      <div class="map-plot"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(`${fy.label} against ${fx.label}`)}">
+        <g aria-hidden="true">${g}</g>${dots}</svg><div id="mapTip" class="map-tip" role="tooltip" hidden></div></div>
+      ${missing ? `<p class="muted map-note">${missing} racket${missing > 1 ? "s" : ""} not shown: ${esc(fx.label.toLowerCase())} or ${esc(fy.label.toLowerCase())} not published.</p>` : ""}
+      ${list.length ? "" : `<p class="muted">No rackets match.</p>`}`;
+  }
+
+  function showTip(g) {
+    const tip = $("mapTip"), r = byId.get(g?.dataset.dot);
+    if (!tip) return;
+    if (!r) { tip.hidden = true; return; }
+    const fx = field(mapX), fy = field(mapY), on = selected.includes(r.id);
+    tip.innerHTML = `<span class="brand">${esc(r.brand)}</span><strong>${esc(r.model)}</strong>
+      <span>${esc(fx.label)}: ${esc(fx.fmt(r))}</span><span>${esc(fy.label)}: ${esc(fy.fmt(r))}</span>
+      <span class="muted">${on ? "Click to remove from compare" : g.classList.contains("full") ? "Up to 4 rackets" : "Click to add to compare"}</span>`;
+    tip.hidden = false;
+    const c = g.querySelector(".mark"), box = tip.parentElement;
+    const x = +c.getAttribute("cx"), y = +c.getAttribute("cy");
+    const left = Math.min(Math.max(0, x - tip.offsetWidth / 2), box.clientWidth - tip.offsetWidth);
+    tip.style.left = left + "px";
+    tip.style.top = (y - tip.offsetHeight - 14 < 0 ? y + 16 : y - tip.offsetHeight - 14) + "px";
   }
 
   function renderTray() {
@@ -481,6 +572,8 @@
     sortDir = p.get("dir") === "desc" ? -1 : 1;
     const v = p.get("view");
     if (VIEWS.includes(v)) view = v;
+    mapX = MAP_AXES[p.get("x")] ? p.get("x") : "weight";
+    mapY = MAP_AXES[p.get("y")] ? p.get("y") : "swingweight";
     RANGE_FIELDS.forEach(rf => {
       const [lo = "", hi = ""] = (p.get(rf.key) || "").split("~");
       $("min-" + rf.key).value = lo !== "" && isFinite(lo) ? lo : "";
@@ -499,6 +592,8 @@
     if (sortDir < 0 && $("sort").value !== "similar") p.set("dir", "desc");
     if ($("sort").value === "similar") p.set("similar", similarId);
     if (view !== "grid") p.set("view", view);
+    if (view === "map" && mapX !== "weight") p.set("x", mapX);
+    if (view === "map" && mapY !== "swingweight") p.set("y", mapY);
     activeRanges().forEach(({ rf }) => p.set(rf.key, $("min-" + rf.key).value.trim() + "~" + $("max-" + rf.key).value.trim()));
     browseHash = p.toString() ? "#" + p : "";
     if (location.hash !== browseHash) history.replaceState(null, "", browseHash || location.pathname + location.search);
@@ -570,7 +665,36 @@
   $("zoomClose").addEventListener("click", () => $("zoom").close());
   // Click on the backdrop (the dialog itself, outside its content) closes it. Esc is built in.
   $("zoom").addEventListener("click", e => { if (e.target === $("zoom")) $("zoom").close(); });
+  const toggleDot = g => {
+    if (g.classList.contains("full")) return showTip(g);
+    const id = g.dataset.dot;
+    toggle(id);
+    const again = $("grid").querySelector(`[data-dot="${CSS.escape(id)}"]`); // the re-render replaces the dot
+    if (again) { again.focus(); showTip(again); }
+  };
+  $("grid").addEventListener("change", e => {
+    const s = e.target.closest("select[data-axis]");
+    if (!s) return;
+    if (s.dataset.axis === "x") mapX = s.value; else mapY = s.value;
+    renderGrid();
+    $("grid").querySelector(`select[data-axis="${s.dataset.axis}"]`).focus();
+  });
+  $("grid").addEventListener("keydown", e => {
+    const g = e.target.closest && e.target.closest("[data-dot]");
+    if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleDot(g); }
+  });
+  $("grid").addEventListener("pointerover", e => { const g = e.target.closest("[data-dot]"); if (g) showTip(g); });
+  $("grid").addEventListener("pointerout", e => { if (e.target.closest("[data-dot]") && !e.relatedTarget?.closest?.("[data-dot]")) showTip(null); });
+  $("grid").addEventListener("focusin", e => { const g = e.target.closest("[data-dot]"); if (g) showTip(g); });
+  $("grid").addEventListener("focusout", () => showTip(null));
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (view === "map" && $("compare").hidden) renderGrid(); }, 150);
+  });
   $("grid").addEventListener("click", e => {
+    const dot = e.target.closest("[data-dot]");
+    if (dot) return toggleDot(dot);
     const h = e.target.closest("button[data-sort]");
     if (h) return sortBy(h.dataset.sort);
     const b = e.target.closest("button[data-id]");

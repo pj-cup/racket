@@ -94,6 +94,15 @@
   const lineOf = r => lines.get(r.line) || null;
   // Latest: no other generation has a later year. A racket without a year is never hidden.
   const isLatest = r => { const g = lineOf(r); return !g || !has(r.year) || g.every(o => !has(o.year) || o.year <= r.year); };
+  // Generation button label: the year, then what the model name adds to the line ("2026 Laver Cup", "2023 V14", "2016").
+  // The model name stands in when it adds nothing and the year is unknown.
+  const genLabel = r => {
+    const yr = has(r.year) ? String(r.year) : "";
+    let ed = r.model.startsWith(r.line) ? r.model.slice(r.line.length) : r.model;
+    if (yr) ed = ed.replace(`(${yr})`, "").replace(yr, "");
+    ed = ed.replace(/\s+/g, " ").trim();
+    return [yr, ed].filter(Boolean).join(" ") || r.model;
+  };
   // "Gen 2/4" under the name; compares the line, oldest first (the newest MAX if there are more).
   const genNote = r => {
     const g = lineOf(r);
@@ -174,9 +183,25 @@
   };
 
   // ---------- Full-screen viewer ----------
-  function openZoom(id) {
+  // The open photo is `zoom=<id>` in the URL hash, on top of the browse or compare hash, so it's a shareable link.
+  // Opening adds a history entry (Back closes it); stepping between generations replaces it.
+  let zoomPushed = false; // this page pushed the current zoom entry, so closing can go Back to remove it
+  const zoomParam = () => new URLSearchParams(location.hash.slice(1)).get("zoom");
+  const stripZoom = h => h.replace(/([#&])zoom=[^&]*&?/, "$1").replace(/[#&]$/, "");
+  const addZoom = (h, id) => (h ? h + "&" : "#") + "zoom=" + encodeURIComponent(id);
+  const keepZoom = h => byId.has(zoomParam()) ? addZoom(stripZoom(h), zoomParam()) : h; // for rewrites of the base hash
+  const setUrl = h => h || location.pathname + location.search;
+
+  function openZoom(id, fromHash = false) {
     const r = byId.get(id);
     if (!r) return;
+    if (!fromHash) {
+      const h = addZoom(stripZoom(location.hash), id);
+      if (location.hash !== h) {
+        if ($("zoom").open) history.replaceState(null, "", h);
+        else { history.pushState(null, "", h); zoomPushed = true; }
+      }
+    }
     const keySpecs = ["headSize", "weight", "balance", "pattern"]
       .map(k => { const f = field(k); return `${icon(f.icon)}${esc(f.fmt(r))}`; }).join(" · ");
     $("zoomPic").className = "zoom-pic" + (r.image ? " photo" : "");
@@ -188,8 +213,8 @@
     $("zoomSimilar").dataset.similar = r.id;
     const g = lineOf(r);
     $("zoomGens").hidden = !g;
-    if (g) $("zoomGens").innerHTML = `<span>Generations:</span>${g.map(o => `<button type="button" data-zoom="${esc(o.id)}"${
-      o === r ? ' aria-current="true"' : ""} title="${esc(o.model)}">${esc(has(o.year) ? String(o.year) : o.model)}</button>`).join("")
+    if (g)$("zoomGens").innerHTML = `<span title="Use ← and → to step through generations">Generations:</span>${g.map(o => `<button type="button" data-zoom="${esc(o.id)}"${
+      o === r ? ' aria-current="true"' : ""} title="${esc(o.model)}">${esc(genLabel(o))}</button>`).join("")
       }<button type="button" class="zoom-similar" data-generations="${esc(r.id)}">Compare generations</button>`;
     if (!$("zoom").open) $("zoom").showModal();
     zoomTo(1);
@@ -271,6 +296,14 @@
     if (e.key === "+" || e.key === "=") zoomTo(zs * ZSTEP);
     else if (e.key === "-") zoomTo(zs / ZSTEP);
     else if (e.key === "0") zoomTo(1);
+    // ← / → step to the previous / next generation (oldest first), stopping at either end.
+    else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      const r = byId.get($("zoomSimilar").dataset.similar), g = r && lineOf(r);
+      if (!g) return;
+      const o = g[g.indexOf(r) + (e.key === "ArrowLeft" ? -1 : 1)];
+      e.preventDefault();
+      if (o) openZoom(o.id);
+    }
   });
 
   // ---------- Browse ----------
@@ -942,15 +975,23 @@
     }
     active.forEach(({ rf, min, max }) => p.set(rf.key, min + "~" + max));
     browseHash = p.toString() ? "#" + String(p).replace(/%7E/g, "~") : ""; // keep "295~310" readable
-    if (location.hash !== browseHash) history.replaceState(null, "", browseHash || location.pathname + location.search);
+    const url = keepZoom(browseHash);
+    if (location.hash !== url) history.replaceState(null, "", setUrl(url));
   }
 
   const goBrowse = () => { location.hash = browseHash; };
+  // Close the photo before navigating elsewhere: drop zoom from the current entry instead of going Back.
+  function closeZoomQuiet() {
+    if (!$("zoom").open) return;
+    zoomPushed = false;
+    history.replaceState(null, "", setUrl(stripZoom(location.hash)));
+    $("zoom").close();
+  }
 
   // Compare a racket's whole line, oldest first, so column A is the first generation.
   function compareGenerations(id) {
     selected = lineOf(byId.get(id)).slice(-MAX).map(r => r.id);
-    if ($("zoom").open) $("zoom").close();
+    closeZoomQuiet();
     location.hash = "compare=" + selected.map(encodeURIComponent).join(",");
     window.scrollTo(0, 0);
   }
@@ -961,28 +1002,35 @@
     p.delete("sort");
     p.delete("dir");
     p.set("similar", id);
-    if ($("zoom").open) $("zoom").close();
+    closeZoomQuiet();
     location.hash = p.toString();
     window.scrollTo(0, 0);
   }
 
   function readHash() {
-    const m = location.hash.match(/^#compare=(.*)$/);
+    const m = location.hash.match(/^#compare=([^&]*)/);
     if (m) selected = [...new Set(m[1].split(",").map(decodeURIComponent))].filter(id => byId.has(id)).slice(0, MAX);
     const showCompare = !!m && selected.length >= 2;
     if (showCompare) { // rewrite the URL to what's actually shown (deduped, unknown ids dropped, max 4)
-      const canon = "#compare=" + selected.map(encodeURIComponent).join(",");
+      const canon = keepZoom("#compare=" + selected.map(encodeURIComponent).join(","));
       if (location.hash !== canon) history.replaceState(null, "", canon);
     } else if (!m) readBrowseHash();
     $("compare").hidden = !showCompare;
     $("browse").hidden = showCompare;
     render();
+    syncZoom();
+  }
+  // Open or close the photo to match the hash (page load, Back/Forward, an edited URL).
+  function syncZoom() {
+    const z = zoomParam();
+    if (byId.has(z)) { if (!$("zoom").open || $("zoomSimilar").dataset.similar !== z) openZoom(z, true); }
+    else if ($("zoom").open) { zoomPushed = false; $("zoom").close(); }
   }
 
   function sync() {
     if (!$("compare").hidden) {
       if (selected.length < 2) { goBrowse(); return; }
-      history.replaceState(null, "", "#compare=" + selected.map(encodeURIComponent).join(","));
+      history.replaceState(null, "", keepZoom("#compare=" + selected.map(encodeURIComponent).join(",")));
     }
     render();
   }
@@ -1030,6 +1078,12 @@
     if (p && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openZoom(p.dataset.zoom); }
   });
   $("zoomClose").addEventListener("click", () => $("zoom").close());
+  // However the photo closes (×, Esc, backdrop), take zoom out of the URL: Back if we added the entry, else rewrite it.
+  $("zoom").addEventListener("close", () => {
+    if (!zoomParam()) { zoomPushed = false; return; }
+    if (zoomPushed) { zoomPushed = false; history.back(); }
+    else history.replaceState(null, "", setUrl(stripZoom(location.hash)));
+  });
   // Click on the backdrop (the dialog itself, outside its content) closes it. Esc is built in.
   $("zoom").addEventListener("click", e => { if (e.target === $("zoom")) $("zoom").close(); });
   const toggleDot = g => {
@@ -1114,6 +1168,7 @@
     try { localStorage.setItem("dataOnly", $("dataOnly").checked ? "1" : "0"); } catch {}
   });
   window.addEventListener("hashchange", readHash);
+  window.addEventListener("popstate", syncZoom); // Back/Forward between pushState entries
   // Photo failed (moved, hotlink-blocked, offline) → fall back to the drawn racket.
   document.addEventListener("error", e => {
     const img = e.target;

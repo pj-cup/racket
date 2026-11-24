@@ -201,11 +201,67 @@ window.RACKETS = [
     headSize: 99, weight: 305, balance: 32.5, swingweight: 330, swingweightType: "strung", stiffness: 69, beam: "22/23.5/21.5", length: 27, pattern: "16x18",
     colors: ["#1e63b5", "#0f1f3a"],
     image: "img/wilson-ultra-99-pro-v5.webp" },
-  { id: "wilson-rf-01-pro", brand: "Wilson", model: "RF 01 Pro",
+  { id: "wilson-rf-01-pro", brand: "Wilson", model: "RF 01 Pro", line: "RF 01 Pro", year: 2024,
+    // year from the Tennis Warehouse playtest review (WRFPRreview, August 2024)
     // unstrung weight/balance from retailer listings of Wilson's spec (wilson.com blocks automated access); beam from Tennis Warehouse
     headSize: 98, weight: 320, balance: 31.5, swingweight: 331, swingweightType: "strung", stiffness: 67, beam: "23.2/23/22", length: 27, pattern: "16x19",
     colors: ["#1a1a1a", "#1a1a1a"],
     image: "img/wilson-rf-01-pro.webp" },
+  { id: "wilson-rf-01-pro-laver-cup-2025", brand: "Wilson", model: "RF 01 Pro Laver Cup 2025", line: "RF 01 Pro", year: 2025,
+    // cosmetic edition of the RF 01 Pro (TW code WRFPLC). TW's product page is retired: swingweight/stiffness/beam from TW's
+    // used-racquet listing for WRFPLC (orderusedproduct.html?pcode=WRFPLC), identical to the RF 01 Pro. No stock number there,
+    // so identity matched on TW code and product name. Unstrung weight/balance from retailer listings of Wilson's spec
+    // (Courtside Tennis 320 g / 31.5 cm; Tennis Plaza and Tennis-Point 320 g). Tennis Direct AU lists 340 g, an outlier not used
+    headSize: 98, weight: 320, balance: 31.5, swingweight: 331, swingweightType: "strung", stiffness: 67, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#2e3236", "#c9a040"],
+    image: "img/wilson-rf-01-pro-laver-cup-2025.jpg" },
+  { id: "wilson-rf-01-pro-laver-cup-2026", brand: "Wilson", model: "RF 01 Pro Laver Cup 2026", line: "RF 01 Pro", year: 2026,
+    // cosmetic edition of the RF 01 Pro (TW code WRP26LC, stock WR216411U = Wilson WR21640); TW specs identical to the RF 01 Pro.
+    // unstrung weight/balance from Wilson's spec as quoted for WR21640 (wilson.com blocks automated access; TennisNerd also gives 320 g); beam from Tennis Warehouse
+    headSize: 98, weight: 320, balance: 31.5, swingweight: 331, swingweightType: "strung", stiffness: 67, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#3d3fa8", "#1c2148"],
+    image: "img/wilson-rf-01-pro-laver-cup-2026.webp" },
+  { id: "wilson-rf-01-pro-hall-of-fame", brand: "Wilson", model: "RF 01 Pro Hall of Fame", line: "RF 01 Pro", year: 2026,
+    // year from Just Tennis's listing ("RF 01 Pro Hall of Fame 2026"), released for Federer's August 2026 Hall of Fame induction.
+    // cosmetic edition of the RF 01 Pro (TW code WRPHOF). TW's product page is gone: swingweight/stiffness/beam from TW's
+    // used-racquet listing for WRPHOF, identical to the RF 01 Pro. No stock number there, so identity matched on TW code and
+    // product name. Unstrung weight/balance from retailer listings of Wilson's spec (Just Tennis 320 g / 31.5 cm,
+    // Merchant of Tennis 315 mm)
+    headSize: 98, weight: 320, balance: 31.5, swingweight: 331, swingweightType: "strung", stiffness: 67, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#efe9da", "#c9a040"],
+    image: "img/wilson-rf-01-pro-hall-of-fame.webp" },
+  { id: "wilson-rf-01", brand: "Wilson", model: "RF 01", line: "RF 01", year: 2024,
+    // year from the Tennis Warehouse playtest review (WRF1Rreview, August 2024)
+    // unstrung weight/balance from Tennis Warehouse Europe's listing of Wilson's spec (wilson.com blocks automated access); beam from Tennis Warehouse
+    headSize: 98, weight: 300, balance: 31.5, swingweight: 319, swingweightType: "strung", stiffness: 64, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/wilson-rf-01.webp" },
+  { id: "wilson-rf-01-laver-cup-2025", brand: "Wilson", model: "RF 01 Laver Cup 2025", line: "RF 01", year: 2025,
+    // cosmetic edition of the RF 01 (TW code WRF0LC). TW's product page is retired: swingweight/stiffness/beam from TW's
+    // used-racquet listing for WRF0LC (orderusedproduct.html?pcode=WRF0LC), identical to the RF 01. No stock number there,
+    // so identity matched on TW code and product name. Unstrung weight/balance from Wilson's spec (au.wilson.com, quoted;
+    // wilson.com blocks automated access) and Tennis-Point UK (300 g). Tennis Direct AU lists 340 g / 30.5 cm / 97 sq in, an outlier not used
+    headSize: 98, weight: 300, balance: 31.5, swingweight: 319, swingweightType: "strung", stiffness: 64, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#2e3236", "#c9a040"],
+    image: "img/wilson-rf-01-laver-cup-2025.jpg" },
+  { id: "wilson-rf-01-laver-cup-2026", brand: "Wilson", model: "RF 01 Laver Cup 2026", line: "RF 01", year: 2026,
+    // cosmetic edition of the RF 01 (TW code WRF26LC, stock WR216511U = Wilson WR21650); TW specs identical to the RF 01.
+    // unstrung weight/balance from Wilson's spec as quoted for WR21650 (wilson.com blocks automated access; TennisNerd also gives 300 g); beam from Tennis Warehouse
+    headSize: 98, weight: 300, balance: 31.5, swingweight: 319, swingweightType: "strung", stiffness: 64, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#3d3fa8", "#1c2148"],
+    image: "img/wilson-rf-01-laver-cup-2026.webp" },
+  { id: "wilson-rf-01-hall-of-fame", brand: "Wilson", model: "RF 01 Hall of Fame", line: "RF 01", year: 2026,
+    // year from Just Tennis's listing ("RF 01 Hall of Fame 2026"), released for Federer's August 2026 Hall of Fame induction
+    // cosmetic edition of the RF 01 (TW code WRFHOF, stock WR217411U); TW specs identical to the RF 01.
+    // unstrung weight/balance from retailer listings of Wilson's spec (Just Tennis, Merchant of Tennis; wilson.com blocks automated access); beam from Tennis Warehouse
+    headSize: 98, weight: 300, balance: 31.5, swingweight: 319, swingweightType: "strung", stiffness: 64, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#efe9da", "#c9a040"],
+    image: "img/wilson-rf-01-hall-of-fame.webp" },
+  { id: "wilson-rf-01-future", brand: "Wilson", model: "RF 01 Future",
+    // unstrung weight/balance from Tennis Warehouse Europe's listing of Wilson's spec (wilson.com blocks automated access); beam from Tennis Warehouse
+    headSize: 98, weight: 280, balance: 32.0, swingweight: 301, swingweightType: "strung", stiffness: 64, beam: "23.2/23/22", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/wilson-rf-01-future.webp" },
   { id: "wilson-blade-100-v10", brand: "Wilson", model: "Blade 100 V10",
     // unstrung weight/balance from retailer listings of Wilson's spec (wilson.com blocks automated access); beam from Tennis Warehouse
     headSize: 100, weight: 300, balance: 32.0, swingweight: 319, swingweightType: "strung", stiffness: 61, beam: "22", length: 27, pattern: "16x19",

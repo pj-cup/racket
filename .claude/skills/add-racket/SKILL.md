@@ -81,6 +81,7 @@ The id is `<brand>-<model>-<year>` in lowercase with hyphens (for example `dunlo
 - Write `beam` as a string. A constant beam is `"20.5"`; a variable beam is `"23/26/23"`.
 - Unpublished specs are `null`. Put a comment next to the racket for any source exception or any disagreement between listings.
 - If the racket uses a new source, update the brand section's source comment.
+- **Generations.** If the site already has another generation of the same frame (same family, head size and pattern, e.g. Blade 98 16x19 V9 → V10), add `line: "<family>", year: <model year>` after `model` on the new racket. If the other generations don't have them yet, add them there too. Take the year from the model name, from the brand, or from Tennis Warehouse's product name ("Pure Aero 2026") or review date (`Review date: June 2026` on the `…review.html` page), and note the source in a comment unless it's in the model name. Use `year: null` if no source gives it. Keep `line` the same string across the family. Don't set `line` on a racket with no other generation on the site.
 
 ## 6. Verify
 

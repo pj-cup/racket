@@ -10,13 +10,18 @@
 //
 // image:  "img/<racket-id>.<ext>" relative to docs/ (product photo, saved locally). Without it (or if it fails) an SVG is drawn.
 // colors: [frame, grip] for the drawn SVG only.
+// line:   frame family across generations (e.g. "Blade 98 16x19"); set only when the site has 2+ generations of it.
+// year:   model year, to order a line's generations: from the model name, the brand, or Tennis Warehouse's name or
+//         review date (noted per racket). null if no source gives it; never guessed. Only set on rackets with a line.
 window.RACKETS = [
   // ---- Babolat (babolat.com spec sheets; photos from Tennis Warehouse) ----
-  { id: "babolat-pure-aero-gen9", brand: "Babolat", model: "Pure Aero Gen9",
+  { id: "babolat-pure-aero-gen9", brand: "Babolat", model: "Pure Aero Gen9", line: "Pure Aero", year: 2026,
+    // year: Tennis Warehouse sells this frame as the "Pure Aero 2026" (BPAR26)
     headSize: 100, weight: 300, balance: 32.1, swingweight: 320, swingweightType: "strung", stiffness: 66, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#f2c400", "#1b1b1b"],
     image: "img/babolat-pure-aero-gen9.webp" },
-  { id: "babolat-pure-drive-gen11", brand: "Babolat", model: "Pure Drive Gen11",
+  { id: "babolat-pure-drive-gen11", brand: "Babolat", model: "Pure Drive Gen11", line: "Pure Drive", year: 2025,
+    // year: Tennis Warehouse sells this frame as the "Pure Drive 2025"
     headSize: 100, weight: 300, balance: 32.0, swingweight: 317, swingweightType: "strung", stiffness: 69, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#1f5fbf", "#111827"],
     image: "img/babolat-pure-drive-gen11.webp" },
@@ -45,7 +50,7 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 325, swingweightType: "strung", stiffness: 69, beam: "23/26/23", length: 27.5, pattern: "16x19",
     colors: ["#1f5fbf", "#111827"],
     image: "img/babolat-pure-drive-plus-gen11.webp" },
-  { id: "babolat-pure-drive-wimbledon-2026", brand: "Babolat", model: "Pure Drive Wimbledon (2026)",
+  { id: "babolat-pure-drive-wimbledon-2026", brand: "Babolat", model: "Pure Drive Wimbledon (2026)", line: "Pure Drive", year: 2026,
     // Gen11 frame in the 2026 Wimbledon cosmetic (Babolat 101566). The TW product page (BPDW26) now returns 404, so
     // swingweight/stiffness come from TW's lab data on BPDW26review, which is the Pure Drive 2025 review.
     // Identity matched on TW code, head size, beam and pattern; no stock number to compare with Babolat's code.
@@ -56,21 +61,21 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 330, swingweightType: "strung", stiffness: 65, beam: "23/26/23", length: 27.5, pattern: "16x19",
     colors: ["#f2c400", "#1b1b1b"],
     image: "img/babolat-pure-aero-plus-gen9.webp" },
-  { id: "babolat-pure-aero-rafa-origin", brand: "Babolat", model: "Pure Aero Rafa Origin",
+  { id: "babolat-pure-aero-rafa-origin", brand: "Babolat", model: "Pure Aero Rafa Origin", line: "Pure Aero Rafa", year: 2023,
     // 2023 model, no longer on babolat.com (product code 101509 redirects to the racquet list):
     // head size and unstrung weight/balance from Babolat's launch article, confirmed by Tennis Warehouse Europe's unstrung spec;
     // swingweight/stiffness, beam, length and pattern from the Tennis Warehouse playtest review (BARORreview); no current TW product page
     headSize: 100, weight: 317, balance: 33.0, swingweight: 371, swingweightType: "strung", stiffness: 70, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#e040a0", "#1b1b1b"],
     image: "img/babolat-pure-aero-rafa-origin.jpg" },
-  { id: "babolat-pure-aero-rafa-2019", brand: "Babolat", model: "Pure Aero Rafa (2019)",
+  { id: "babolat-pure-aero-rafa-2019", brand: "Babolat", model: "Pure Aero Rafa (2019)", line: "Pure Aero Rafa", year: 2019,
     // Gen7-era Rafa cosmetic (orange/yellow/purple), no longer on babolat.com: unstrung weight/balance from retailer listings
     // of Babolat's spec (Tradeinn, Tennis-Point); swingweight/stiffness from Tennis Warehouse (BPARR product page + BPARRreview).
     // Identity matched on photo/colourway, head size, beam and pattern (TW stock number is blank, no Babolat code to compare)
     headSize: 100, weight: 300, balance: 32.0, swingweight: 324, swingweightType: "strung", stiffness: 67, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#f28c1e", "#1b1b1b"],
     image: "img/babolat-pure-aero-rafa-2019.jpg" },
-  { id: "babolat-pure-aero-2016", brand: "Babolat", model: "Pure Aero (2016)",
+  { id: "babolat-pure-aero-2016", brand: "Babolat", model: "Pure Aero (2016)", line: "Pure Aero", year: 2016,
     // 2016 model (TW code BPA), no longer on babolat.com and TW Europe: unstrung weight/balance, beam and pattern from
     // Racketpedia's listing of Babolat's declared spec; swingweight/stiffness from the Tennis Warehouse playtest review
     // (BPAreview, same lab data as BPAPLYreview for the Play version); no current TW product page.
@@ -84,7 +89,8 @@ window.RACKETS = [
     headSize: 97, weight: 315, balance: 31.0, swingweight: 332, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
     colors: ["#2a2420", "#1a1a1a"],
     image: "img/wilson-pro-staff-97-v14.jpg" },
-  { id: "wilson-blade-98-16x19-v10", brand: "Wilson", model: "Blade 98 16x19 V10",
+  { id: "wilson-blade-98-16x19-v10", brand: "Wilson", model: "Blade 98 16x19 V10", line: "Blade 98 16x19", year: 2026,
+    // year: Tennis Warehouse review date (WB9810review, June 2026)
     headSize: 98, weight: 305, balance: 32.0, swingweight: 322, swingweightType: "strung", stiffness: 61, beam: "21.5→20.5", length: 27, pattern: "16x19",
     colors: ["#3f6b3a", "#1a1a1a"],
     image: "img/wilson-blade-98-16x19-v10.webp" },
@@ -93,19 +99,22 @@ window.RACKETS = [
     headSize: 98, weight: 305, balance: 32.0, swingweight: 325, swingweightType: "strung", stiffness: 61, beam: "21.5/21.5/20.5", length: 27, pattern: "18x20",
     colors: ["#3f6b3a", "#1a1a1a"],
     image: "img/wilson-blade-98-18x20-v10.webp" },
-  { id: "wilson-blade-98-16x19-v7", brand: "Wilson", model: "Blade 98 16x19 V7",
+  { id: "wilson-blade-98-16x19-v7", brand: "Wilson", model: "Blade 98 16x19 V7", line: "Blade 98 16x19", year: 2019,
+    // year: Tennis Warehouse review date (WB98Rreview, August 2019)
     // unstrung weight/balance and beam from a retailer listing of Wilson's spec (tennisnuts.com, WR013610U; wilson.com blocks automated access);
     // Tennis Warehouse lists a 21mm beam. Swingweight/stiffness from the Tennis Warehouse playtest review (WB98R; product page retired)
     headSize: 98, weight: 305, balance: 32.0, swingweight: 328, swingweightType: "strung", stiffness: 62, beam: "20.6", length: 27, pattern: "16x19",
     colors: ["#4a5a3a", "#1a1a1a"],
     image: "img/wilson-blade-98-16x19-v7.jpg" },
-  { id: "wilson-blade-98-16x19-v8", brand: "Wilson", model: "Blade 98 16x19 V8",
+  { id: "wilson-blade-98-16x19-v8", brand: "Wilson", model: "Blade 98 16x19 V8", line: "Blade 98 16x19", year: 2021,
+    // year: Tennis Warehouse review date (16BV8Rreview, September 2021)
     // unstrung weight/balance and beam from Wilson's spec as listed by tenniscompanion.org (wilson.com and Shopify retailers block automated access);
     // swingweight/stiffness from the Tennis Warehouse playtest review (16BV8R; product page retired)
     headSize: 98, weight: 305, balance: 32.0, swingweight: 320, swingweightType: "strung", stiffness: 61, beam: "21", length: 27, pattern: "16x19",
     colors: ["#8c5a3c", "#1a1a1a"],
     image: "img/wilson-blade-98-16x19-v8.jpg" },
-  { id: "wilson-blade-98-16x19-v9", brand: "Wilson", model: "Blade 98 16x19 V9",
+  { id: "wilson-blade-98-16x19-v9", brand: "Wilson", model: "Blade 98 16x19 V9", line: "Blade 98 16x19", year: 2024,
+    // year: Tennis Warehouse review date (WB9816review, May 2024)
     // unstrung weight/balance from retailer listings of Wilson's spec (merchantoftennis.com; wilson.com blocks automated access);
     // beam from Tennis Warehouse (Merchant of Tennis lists 20.6mm)
     headSize: 98, weight: 305, balance: 32.0, swingweight: 324, swingweightType: "strung", stiffness: 62, beam: "21", length: 27, pattern: "16x19",
@@ -169,11 +178,11 @@ window.RACKETS = [
     image: "img/wilson-blade-104-v10.webp" },
 
   // ---- Head (head.com listings; photos from Tennis Warehouse) ----
-  { id: "head-speed-mp-2026", brand: "Head", model: "Speed MP 2026",
+  { id: "head-speed-mp-2026", brand: "Head", model: "Speed MP 2026", line: "Speed MP", year: 2026,
     headSize: 100, weight: 300, balance: 32.0, swingweight: 329, swingweightType: "strung", stiffness: 60, beam: "23", length: 27, pattern: "16x19",
     colors: ["#f0f0f0", "#1a1a1a"],
     image: "img/head-speed-mp-2026.webp" },
-  { id: "head-speed-mp-legend-2025", brand: "Head", model: "Speed MP Legend 2025",
+  { id: "head-speed-mp-legend-2025", brand: "Head", model: "Speed MP Legend 2025", line: "Speed MP", year: 2025,
     // unstrung weight/balance and beam from retailer listings of Head's spec (head.com blocks automated access)
     headSize: 100, weight: 300, balance: 32.0, swingweight: 329, swingweightType: "strung", stiffness: 60, beam: "23", length: 27, pattern: "16x19",
     colors: ["#1a1a1a", "#1a1a1a"],

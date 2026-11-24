@@ -84,6 +84,20 @@
   }).filter(Boolean).join(" · ") || "Same specs";
   let similarId = null; // set: the browse list is sorted by closeness to this racket
 
+  // Generations: rackets sharing a `line`, oldest first (unknown year last). Only lines with 2+ rackets on the site.
+  const lines = new Map();
+  data.filter(r => r.line).forEach(r => { if (!lines.has(r.line)) lines.set(r.line, []); lines.get(r.line).push(r); });
+  lines.forEach((rs, k) => rs.length < 2 ? lines.delete(k) : rs.sort((a, b) => (a.year ?? Infinity) - (b.year ?? Infinity)));
+  const lineOf = r => lines.get(r.line) || null;
+  // Latest: no other generation has a later year. A racket without a year is never hidden.
+  const isLatest = r => { const g = lineOf(r); return !g || !has(r.year) || g.every(o => !has(o.year) || o.year <= r.year); };
+  // "2 of 4 generations · compare" under the name; compares the line, oldest first (the newest MAX if there are more).
+  const genNote = r => {
+    const g = lineOf(r);
+    if (!g) return "";
+    return `<button type="button" class="gen-link" data-generations="${esc(r.id)}">${g.indexOf(r) + 1} of ${g.length} generations · compare</button>`;
+  };
+
 
   let selected = [];
 
@@ -168,7 +182,12 @@
     $("zoomTitle").innerHTML = `<span class="brand">${esc(r.brand)}</span>${esc(r.model)}`;
     $("zoomMeta").innerHTML = keySpecs;
     $("zoomSimilar").dataset.similar = r.id;
-    $("zoom").showModal();
+    const g = lineOf(r);
+    $("zoomGens").hidden = !g;
+    if (g) $("zoomGens").innerHTML = `<span>Generations:</span>${g.map(o => `<button type="button" data-zoom="${esc(o.id)}"${
+      o === r ? ' aria-current="true"' : ""} title="${esc(o.model)}">${esc(has(o.year) ? String(o.year) : o.model)}</button>`).join("")
+      }<button type="button" class="zoom-similar" data-generations="${esc(r.id)}">Compare generations</button>`;
+    if (!$("zoom").open) $("zoom").showModal();
     zoomTo(1);
   }
 
@@ -301,11 +320,13 @@
     const head = $("head").value;
     const sort = $("sort").value;
     const ref = similarId ? byId.get(similarId) : null;
+    const latest = $("latestOnly").checked;
     let hiddenNoSpec = 0;
     let list = data.filter(r => {
       if (brand && r.brand !== brand) return false;
       const text = `${r.brand} ${r.model}`.toLowerCase();
       if (!words.every(w => text.includes(w))) return false; // every word, any order
+      if (latest && !isLatest(r)) return false;
       if (head) {
         const [lo, hi] = head.split("-").map(Number);
         if (r.headSize < lo || r.headSize > hi) return false;
@@ -353,7 +374,8 @@
     const list = ref ? [ref, ...found] : found;
     $("count").textContent = `${found.length} of ${data.length} rackets` + (ref ? " + reference" : "") +
       (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + (view === "map" ? " · Click a dot to compare" : " · Click a photo to compare");
-    $("moreCount").textContent = active.length ? ` (${active.length})` : "";
+    const nMore = active.length + $("latestOnly").checked;
+    $("moreCount").textContent = nMore ? ` (${nMore})` : "";
     RANGE_FIELDS.forEach(paintRange);
     if (ref) $("sort").value = "similar"; // the hidden option, so the menu reads "Most similar"
     $("similarBanner").hidden = !ref;
@@ -370,7 +392,7 @@
         .map(f => `<dt>${icon(f.icon)}${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
       return `<article class="card${on ? " selected" : ""}">
         ${browsePic(r, "", on, full)}
-        <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${simNote(r, ref)}</div>
+        <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${genNote(r)}${simNote(r, ref)}</div>
         <dl class="specs">${rows}</dl>
       </article>`;
     }).join("") || NONE;
@@ -392,7 +414,7 @@
       const specs = fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(r))}</div>`).join("");
       return `<article class="row${on ? " selected" : ""}">
         ${browsePic(r, "small", on, full)}
-        <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${simNote(r, ref)}</div>
+        <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${genNote(r)}${simNote(r, ref)}</div>
         <div class="row-specs">${specs}</div>
       </article>`;
     }).join("");
@@ -513,8 +535,11 @@
     const rs = selected.map(id => byId.get(id));
     const a = rs[0];
     const diffOnly = $("diffOnly").checked;
+    const g = lineOf(a), sameLine = g && rs.every(r => r.line === a.line);
+    $("compareTitle").textContent = sameLine ? `Generations of ${a.brand} ${a.line}` : "Compare";
     const head = `<thead><tr><th class="corner"><span class="muted">Specs</span></th>${rs.map((r, i) =>
-      `<th>${picBox(r, "small")}<span class="letter">${LETTERS[i]}</span><span class="brand">${esc(r.brand)}</span><span class="model">${esc(r.model)}</span><button class="remove" data-remove="${esc(r.id)}" aria-label="Remove ${esc(r.brand + " " + r.model)}">×</button></th>`
+      `<th>${picBox(r, "small")}<span class="letter">${LETTERS[i]}</span><span class="brand">${esc(r.brand)}</span><span class="model">${esc(r.model)}</span>${
+        sameLine && has(r.year) ? `<span class="year">${r.year}</span>` : ""}<button class="remove" data-remove="${esc(r.id)}" aria-label="Remove ${esc(r.brand + " " + r.model)}">×</button></th>`
     ).join("")}</tr></thead>`;
 
     const row = f => {
@@ -575,6 +600,7 @@
     setSelect("head", p.get("head") || "");
     setSelect("sort", p.get("sort") || "brand");
     similarId = byId.has(p.get("similar")) ? p.get("similar") : null;
+    $("latestOnly").checked = p.get("latest") === "1";
     sortDir = p.get("dir") === "desc" ? -1 : 1;
     const v = p.get("view");
     if (VIEWS.includes(v)) view = v;
@@ -584,7 +610,7 @@
       const [lo = "", hi = ""] = (p.get(rf.key) || "").split("~");
       setRange(rf, lo === "" ? null : +lo, hi === "" ? null : +hi);
     });
-    if (activeRanges().length) $("more").open = true;
+    if (activeRanges().length || $("latestOnly").checked) $("more").open = true;
   }
 
   function writeBrowseHash(active) {
@@ -594,6 +620,7 @@
     if ($("brand").value) p.set("brand", $("brand").value);
     if ($("head").value) p.set("head", $("head").value);
     if (similarId) p.set("similar", similarId);
+    if ($("latestOnly").checked) p.set("latest", "1");
     else {
       if (sort !== "brand") p.set("sort", sort);
       if (sortDir < 0) p.set("dir", "desc");
@@ -607,6 +634,14 @@
   }
 
   const goBrowse = () => { location.hash = browseHash; };
+
+  // Compare a racket's whole line, oldest first, so column A is the first generation.
+  function compareGenerations(id) {
+    selected = lineOf(byId.get(id)).slice(-MAX).map(r => r.id);
+    if ($("zoom").open) $("zoom").close();
+    location.hash = "compare=" + selected.map(encodeURIComponent).join(",");
+    window.scrollTo(0, 0);
+  }
 
   // Sort the browse list by closeness to racket `id` (a new history entry, so Back undoes it).
   function showSimilar(id) {
@@ -653,8 +688,10 @@
     if (end === "min" ? +e.target.value > +other.value : +e.target.value < +other.value) e.target.value = other.value;
     renderGrid();
   });
+  $("latestOnly").addEventListener("change", renderGrid);
   $("resetRanges").addEventListener("click", () => {
     RANGE_FIELDS.forEach(rf => setRange(rf, null, null));
+    $("latestOnly").checked = false;
     renderGrid();
   });
   $("sort").addEventListener("input", () => { sortDir = 1; similarId = null; renderGrid(); });
@@ -669,6 +706,8 @@
     if (p) openZoom(p.dataset.zoom);
     const s = e.target.closest("[data-similar]");
     if (s) showSimilar(s.dataset.similar);
+    const gen = e.target.closest("[data-generations]");
+    if (gen) compareGenerations(gen.dataset.generations);
   });
   document.addEventListener("keydown", e => {
     const p = e.target.closest && e.target.closest("[data-zoom]");

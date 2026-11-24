@@ -49,6 +49,7 @@
         <summary>More filters<span id="moreCount" class="more-count"></span></summary>
         <div class="range-body">
           <div id="rangeInputs" class="range-inputs"></div>
+          <label class="toggle"><input id="latestOnly" type="checkbox"> Latest generation only</label>
           <button id="resetRanges" class="btn ghost" type="button">Reset</button>
         </div>
       </details>
@@ -62,7 +63,7 @@
 
     <section id="compare" hidden>
       <div class="compare-head">
-        <h2>Compare</h2>
+        <h2 id="compareTitle">Compare</h2>
         <label class="toggle"><input id="diffOnly" type="checkbox"> Differences only</label>
         <label class="toggle"><input id="dataOnly" type="checkbox"> Compact</label>
         <button id="copyLink" class="btn ghost" type="button">Copy link</button>
@@ -92,6 +93,7 @@
       <h2 id="zoomTitle"></h2>
       <p id="zoomMeta" class="muted"></p>
       <button id="zoomSimilar" class="zoom-similar" type="button" data-similar="">Find similar rackets</button>
+      <div id="zoomGens" class="zoom-gens" hidden></div>
     </div>
   </dialog>
 

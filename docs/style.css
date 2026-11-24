@@ -170,6 +170,12 @@ button.pic:disabled { cursor: not-allowed; opacity: 0.55; }
   display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap;
   background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 8px 12px; margin-bottom: 8px;
 }
+/* Generations link under a racket's name */
+.gen-link {
+  all: unset; box-sizing: border-box; display: inline-block; margin-top: 2px; font-size: 0.82rem; color: var(--accent); cursor: pointer;
+}
+.gen-link:hover { text-decoration: underline; }
+.gen-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 .sim { font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 2px; }
 .sim.ref { color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
 /* Compare header: photos are tall two-view shots, so lay them on their side to fill the wide box
@@ -309,6 +315,7 @@ tbody th, thead th.corner { position: sticky; left: 0; z-index: 1; }
 thead th.corner { z-index: 3; }
 thead .brand { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
 thead .model { font-size: 1rem; }
+thead .year { display: block; font-size: 0.8rem; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
 .letter {
   display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
   background: var(--accent); color: var(--accent-ink); font-size: 0.75rem; font-weight: 700; margin-bottom: 4px;
@@ -381,6 +388,13 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 .zoom-caption h2 { margin: 0; font-size: 1.3rem; }
 .zoom-caption .brand { display: block; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: #a9b2a6; font-weight: 500; }
 .zoom-caption p { margin: 4px 0 0; color: #a9b2a6; }
+.zoom-gens { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; color: #a9b2a6; font-size: 0.9rem; }
+.zoom-gens button[data-zoom] {
+  padding: 3px 10px; border-radius: 14px; font: inherit; cursor: pointer; font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(255, 255, 255, 0.25); background: transparent; color: #fff;
+}
+.zoom-gens button[aria-current="true"] { background: #fff; color: #0d100d; border-color: #fff; }
+.zoom-gens .zoom-similar { margin-top: 0; }
 .zoom-similar {
   margin-top: 10px; padding: 6px 14px; border-radius: 18px; font: inherit; font-size: 0.9rem; cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.08); color: #fff;

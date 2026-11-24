@@ -11,6 +11,7 @@ Static site for browsing and comparing tennis rackets. See README.md for the lay
 - **Swing weight** and **stiffness** always come from Tennis Warehouse (swing weight strung, `swingweightType: "strung"`). Don't mix in brand or unstrung numbers.
 - **Balance** is always unstrung, from the brand or a retailer listing the brand's spec. Never use Tennis Warehouse's balance, which is strung.
 - **Beam** comes from the brand, or from Tennis Warehouse when the brand doesn't publish it.
+- **Generations:** rackets of the same frame family share `line` and have a sourced `year` (never guessed; `null` if unknown). Set them only when the site has 2+ generations; the `add-racket` skill has the details.
 - **Photos** go in `docs/img/<racket-id>.<ext>` and are referenced as `image: "img/<racket-id>.<ext>"`. Each photo's file name must match the racket's `id`.
 
 ## Fetching data

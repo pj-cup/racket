@@ -36,6 +36,7 @@
           <option value="stiffness">Sort: Stiffness</option>
           <option value="balance">Sort: Balance</option>
           <option value="pattern">Sort: String pattern</option>
+          <option value="similar" hidden>Sort: Most similar</option>
         </select>
         <div class="view-toggle" role="group" aria-label="View">
           <button type="button" data-view="grid" aria-pressed="true" aria-label="Thumbnail view" title="Thumbnails"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5" rx="1"/><rect x="9.5" y="1.5" width="5" height="5" rx="1"/><rect x="1.5" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg></button>
@@ -50,6 +51,10 @@
           <button id="resetRanges" class="btn ghost" type="button">Reset</button>
         </div>
       </details>
+      <div id="similarBanner" class="similar-banner" hidden>
+        <span>Closest first to <strong id="similarName"></strong>, by head size, weight, balance, swing weight and stiffness.</span>
+        <button id="clearSimilar" class="btn ghost" type="button">Clear</button>
+      </div>
       <p id="count" class="muted"></p>
       <div id="grid" class="grid"></div>
     </section>
@@ -85,6 +90,7 @@
     <div class="zoom-caption">
       <h2 id="zoomTitle"></h2>
       <p id="zoomMeta" class="muted"></p>
+      <button id="zoomSimilar" class="zoom-similar" type="button" data-similar="">Find similar rackets</button>
     </div>
   </dialog>
 

@@ -60,6 +60,39 @@
     { key: "stiffness", label: "Stiffness", unit: "RA" },
     { key: "balance", label: "Balance", unit: "pts HL", round: true },
   ].map(rf => ({ ...rf, f: field(rf.key) }));
+  // "Find similar": distance between two rackets over these specs, each scaled by its spread across all rackets
+  // (z-scores), as a root mean square over the specs both rackets publish. Fewer than 3 shared specs: not ranked.
+  const SIM_KEYS = ["headSize", "weight", "balance", "swingweight", "stiffness"];
+  const simStats = SIM_KEYS.map(k => {
+    const f = field(k), vals = data.map(f.num).filter(has);
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const sd = Math.sqrt(vals.reduce((a, v) => a + (v - mean) ** 2, 0) / vals.length) || 1;
+    return { f, sd };
+  });
+  function distance(a, b) {
+    let sum = 0, n = 0;
+    simStats.forEach(({ f, sd }) => {
+      const va = f.num(a), vb = f.num(b);
+      if (has(va) && has(vb)) { sum += ((va - vb) / sd) ** 2; n++; }
+    });
+    return n >= 3 ? Math.sqrt(sum / n) : Infinity;
+  }
+  // Short "how it differs" line vs the reference racket, e.g. "+5 g · 1 pt more HL · +8 SW".
+  function simDiff(r, ref) {
+    const parts = [];
+    const d = (a, b) => has(a) && has(b) ? a - b : 0;
+    const dh = d(r.headSize, ref.headSize); if (dh) parts.push(signed(dh, " sq in"));
+    const dw = d(r.weight, ref.weight); if (dw) parts.push(signed(dw, " g"));
+    if (has(r.balance) && has(ref.balance)) {
+      const db = Math.round(balancePts(r)) - Math.round(balancePts(ref));
+      if (db) parts.push(`${pts(Math.abs(db))} ${db > 0 ? "more" : "less"} HL`);
+    }
+    const ds = d(r.swingweight, ref.swingweight); if (ds) parts.push(signed(ds, " SW"));
+    const dr = d(r.stiffness, ref.stiffness); if (dr) parts.push(signed(dr, " RA"));
+    return parts.join(" · ") || "Same specs";
+  }
+  let similarId = null; // reference racket while the browse list is sorted by similarity
+
   const rangeNum = (rf, r) => { const v = rf.f.num(r); return !has(v) ? null : rf.round ? Math.round(v) : v; };
 
   let selected = [];
@@ -126,6 +159,9 @@
       <button type="button" class="zoom-btn" data-zoom="${esc(r.id)}" aria-label="View ${name} full screen" title="Zoom">
         <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14M5 7h4M7 5v4"/></svg>
       </button>
+      <button type="button" class="zoom-btn similar-btn" data-similar="${esc(r.id)}" aria-label="Find rackets similar to ${name}" title="Find similar">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="8" r="4.2"/><circle cx="10" cy="8" r="4.2"/></svg>
+      </button>
     </div>`;
   };
 
@@ -141,6 +177,7 @@
       : racketImage(r, true);
     $("zoomTitle").innerHTML = `<span class="brand">${esc(r.brand)}</span>${esc(r.model)}`;
     $("zoomMeta").innerHTML = keySpecs;
+    $("zoomSimilar").dataset.similar = r.id;
     $("zoom").showModal();
     zoomTo(1);
   }
@@ -247,6 +284,7 @@
     }).filter(Boolean);
   }
 
+  let refAdded = false; // similar mode: the reference is shown although the filters exclude it
   let hiddenNoSpec = 0; // rackets dropped by a min/max filter only because the brand doesn't publish that spec
   function filtered() {
     const words = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -255,6 +293,7 @@
     const sort = $("sort").value;
     const active = activeRanges();
     hiddenNoSpec = 0;
+    refAdded = false;
     let list = data.filter(r => {
       if (brand && r.brand !== brand) return false;
       const text = `${r.brand} ${r.model}`.toLowerCase();
@@ -268,6 +307,14 @@
       if (vals.some(v => !has(v))) { hiddenNoSpec++; return false; }
       return true;
     });
+    if (sort === "similar") {
+      const ref = byId.get(similarId);
+      const dist = new Map(list.map(r => [r.id, distance(r, ref)]));
+      refAdded = !list.includes(ref);
+      list = list.filter(r => r !== ref).sort((a, b) => dist.get(a.id) - dist.get(b.id));
+      list.unshift(ref); // the reference always shows, first, even when the filters would hide it
+      return list;
+    }
     const cmp = sort === "brand" ? (a, b) => (a.brand + a.model).localeCompare(b.brand + b.model)
       : sort === "pattern" ? (a, b) => a.pattern.localeCompare(b.pattern, undefined, { numeric: true })
       : sort === "balance" ? (a, b) => balancePts(a) - balancePts(b) // by the points shown, which also depend on length
@@ -281,7 +328,7 @@
   let sortDir = 1;
   function sortBy(key) {
     if ($("sort").value === key) sortDir = -sortDir;
-    else { $("sort").value = key; sortDir = 1; }
+    else { $("sort").value = key; sortDir = 1; similarId = null; }
     renderGrid();
   }
 
@@ -290,13 +337,22 @@
   let view = "grid";
   try { const v = localStorage.getItem("view"); if (VIEWS.includes(v)) view = v; } catch {}
 
+  // Under each name in similar mode: "Reference", or how the racket differs from it.
+  let simRef = null;
+  const simNote = r => !simRef ? "" : r === simRef ? `<div class="sim ref">Reference</div>`
+    : `<div class="sim">${esc(simDiff(r, simRef))}</div>`;
+
   function renderGrid() {
     const list = filtered();
-    $("count").textContent = `${list.length} of ${data.length} rackets` +
+    $("count").textContent = `${list.length - refAdded} of ${data.length} rackets` + (refAdded ? " + reference" : "") +
       (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + " · Click a photo to compare";
     const nRanges = activeRanges().length;
     $("moreCount").textContent = nRanges ? ` (${nRanges})` : "";
     writeBrowseHash();
+    const ref = $("sort").value === "similar" ? byId.get(similarId) : null;
+    $("similarBanner").hidden = !ref;
+    if (ref) $("similarName").textContent = `${ref.brand} ${ref.model}`;
+    simRef = ref;
     const full = selected.length >= MAX;
     $("grid").className = view;
     document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
@@ -307,7 +363,7 @@
         .map(f => `<dt>${icon(f.icon)}${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
       return `<article class="card${on ? " selected" : ""}">
         ${browsePic(r, "", on, full)}
-        <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3></div>
+        <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${simNote(r)}</div>
         <dl class="specs">${rows}</dl>
       </article>`;
     }).join("") || `<p class="muted">No rackets match.</p>`;
@@ -329,7 +385,7 @@
       const specs = fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(r))}</div>`).join("");
       return `<article class="row${on ? " selected" : ""}">
         ${browsePic(r, "small", on, full)}
-        <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3></div>
+        <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${simNote(r)}</div>
         <div class="row-specs">${specs}</div>
       </article>`;
     }).join("");
@@ -420,6 +476,8 @@
     setSelect("brand", p.get("brand") || "");
     setSelect("head", p.get("head") || "");
     setSelect("sort", p.get("sort") || "brand");
+    similarId = byId.has(p.get("similar")) ? p.get("similar") : null;
+    if ($("sort").value === "similar" && !similarId) $("sort").value = "brand";
     sortDir = p.get("dir") === "desc" ? -1 : 1;
     const v = p.get("view");
     if (VIEWS.includes(v)) view = v;
@@ -438,7 +496,8 @@
     if ($("brand").value) p.set("brand", $("brand").value);
     if ($("head").value) p.set("head", $("head").value);
     if ($("sort").value !== "brand") p.set("sort", $("sort").value);
-    if (sortDir < 0) p.set("dir", "desc");
+    if (sortDir < 0 && $("sort").value !== "similar") p.set("dir", "desc");
+    if ($("sort").value === "similar") p.set("similar", similarId);
     if (view !== "grid") p.set("view", view);
     activeRanges().forEach(({ rf }) => p.set(rf.key, $("min-" + rf.key).value.trim() + "~" + $("max-" + rf.key).value.trim()));
     browseHash = p.toString() ? "#" + p : "";
@@ -446,6 +505,17 @@
   }
 
   const goBrowse = () => { location.hash = browseHash; };
+
+  // Sort the browse list by closeness to racket `id` (a new history entry, so Back undoes it).
+  function showSimilar(id) {
+    const p = new URLSearchParams(browseHash.slice(1));
+    p.set("sort", "similar");
+    p.delete("dir");
+    p.set("similar", id);
+    if ($("zoom").open) $("zoom").close();
+    location.hash = p.toString();
+    window.scrollTo(0, 0);
+  }
 
   function readHash() {
     const m = location.hash.match(/^#compare=(.*)$/);
@@ -481,6 +551,7 @@
     renderGrid();
   });
   $("sort").addEventListener("input", () => { sortDir = 1; renderGrid(); });
+  $("clearSimilar").addEventListener("click", () => { $("sort").value = "brand"; sortDir = 1; renderGrid(); });
   document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.addEventListener("click", () => {
     view = b.dataset.view;
     try { localStorage.setItem("view", view); } catch {}
@@ -489,6 +560,8 @@
   document.addEventListener("click", e => {
     const p = e.target.closest("[data-zoom]");
     if (p) openZoom(p.dataset.zoom);
+    const s = e.target.closest("[data-similar]");
+    if (s) showSimilar(s.dataset.similar);
   });
   document.addEventListener("keydown", e => {
     const p = e.target.closest && e.target.closest("[data-zoom]");

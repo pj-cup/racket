@@ -87,10 +87,69 @@ window.RACKETS = [
     image: "img/babolat-pure-aero-2016.jpg" },
 
   // ---- Wilson (wilson.com listings; photos from Tennis Warehouse) ----
-  { id: "wilson-pro-staff-97-v14", brand: "Wilson", model: "Pro Staff 97 V14",
+  { id: "wilson-pro-staff-97-v14", brand: "Wilson", model: "Pro Staff 97 V14", line: "Pro Staff 97", year: 2023,
+    // year: Tennis Warehouse review date (W97V14review, April 2023)
     headSize: 97, weight: 315, balance: 31.0, swingweight: 332, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
     colors: ["#2a2420", "#1a1a1a"],
     image: "img/wilson-pro-staff-97-v14.jpg" },
+  { id: "wilson-pro-staff-97-classic", brand: "Wilson", model: "Pro Staff 97 Classic", line: "Pro Staff 97", year: 2026,
+    // A cosmetic-only update of the V14 (Tennis Warehouse); some retailers call it "V15". year: Tennis Warehouse review revision date (WPS97Creview, January 2026)
+    // unstrung weight/balance from Wilson's spec (wilson.com listing WR20130, via search; wilson.com blocks automated access), matched by merchantoftennis.com;
+    // swingweight/stiffness/beam from the Tennis Warehouse product page (WPS97C, stock number WR201311U)
+    headSize: 97, weight: 315, balance: 31.0, swingweight: 325, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#2a2a2a", "#1a1a1a"],
+    image: "img/wilson-pro-staff-97-classic.webp" },
+  { id: "wilson-pro-staff-97-v13", brand: "Wilson", model: "Pro Staff 97 V13", line: "Pro Staff 97", year: 2020,
+    // year: Tennis Warehouse review date (W97V13review, October 2020)
+    // unstrung weight/balance and beam from Wilson's spec as listed by tenniscompanion.org, tennisgiant.com and christysports.com (WR043811U);
+    // catch.com.au lists 31.0 cm. Swingweight/stiffness from the Tennis Warehouse playtest review (W97V13; product page retired)
+    headSize: 97, weight: 315, balance: 31.2, swingweight: 321, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/wilson-pro-staff-97-v13.jpg" },
+  { id: "wilson-pro-staff-97-countervail", brand: "Wilson", model: "Pro Staff 97 Countervail", line: "Pro Staff 97", year: 2017,
+    // year: Tennis Warehouse review date (P97CVreview, October 2017)
+    // unstrung weight/balance and beam from a retailer listing of Wilson's spec (tennisnuts.com, WRT74180U; wilson.com blocks automated access);
+    // swingweight/stiffness from the Tennis Warehouse playtest review (P97CV; product page retired)
+    headSize: 97, weight: 315, balance: 31.0, swingweight: 320, swingweightType: "strung", stiffness: 65, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#f0f0f0", "#1a1a1a"],
+    image: "img/wilson-pro-staff-97-countervail.jpg" },
+  { id: "wilson-pro-staff-97-2016", brand: "Wilson", model: "Pro Staff 97 (2016)", line: "Pro Staff 97", year: 2016,
+    // unstrung weight/balance and beam from a retailer listing of Wilson's spec (tennisnuts.com, WRT73150U; wilson.com blocks automated access);
+    // swingweight/stiffness from the Tennis Warehouse playtest review (PS97BK, August 2016; product page retired)
+    headSize: 97, weight: 315, balance: 31.0, swingweight: 324, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/wilson-pro-staff-97-2016.jpg" },
+  { id: "wilson-pro-staff-97-2014", brand: "Wilson", model: "Pro Staff 97 (2014)", line: "Pro Staff 97", year: 2014,
+    // unstrung weight from the Tennis Warehouse review text ("315 grams (unstrung)"); no source publishes its unstrung balance, so it's null
+    // (TW says the 2016 frame kept the same specs). Beam, swingweight and stiffness from the Tennis Warehouse playtest review (PS97, September 2014)
+    headSize: 97, weight: 315, balance: null, swingweight: 320, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#d32f2f", "#b5651d"],
+    image: "img/wilson-pro-staff-97-2014.jpg" },
+  { id: "wilson-pro-staff-rf97-v13", brand: "Wilson", model: "Pro Staff RF97 V13", line: "Pro Staff RF97", year: 2020,
+    // year: Tennis Warehouse review date (97V13Rreview, September 2020)
+    // unstrung weight/balance and beam from Wilson's spec as listed by tenniscompanion.org (wilson.com blocks automated access);
+    // swingweight/stiffness from the Tennis Warehouse review, which reuses its 2018 measurements ("specs and layup remain unchanged")
+    headSize: 97, weight: 340, balance: 30.5, swingweight: 335, swingweightType: "strung", stiffness: 68, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/wilson-pro-staff-rf97-v13.jpg" },
+  { id: "wilson-pro-staff-rf97-autograph-2018", brand: "Wilson", model: "Pro Staff RF97 Autograph (2018)", line: "Pro Staff RF97", year: 2018,
+    // unstrung weight/balance and beam from a retailer listing of Wilson's spec (tennisnuts.com, WRT74170U black/white; wilson.com blocks automated access);
+    // swingweight/stiffness from the Tennis Warehouse playtest review (PRF97A, August 2018; product page retired)
+    headSize: 97, weight: 340, balance: 30.5, swingweight: 335, swingweightType: "strung", stiffness: 68, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#f0f0f0", "#1a1a1a"],
+    image: "img/wilson-pro-staff-rf97-autograph-2018.jpg" },
+  { id: "wilson-pro-staff-rf97-autograph-2016", brand: "Wilson", model: "Pro Staff RF97 Autograph (2016)", line: "Pro Staff RF97", year: 2016,
+    // unstrung weight/balance and beam from a retailer listing of Wilson's spec (tennisnuts.com, WRT73140U black; wilson.com blocks automated access);
+    // swingweight/stiffness from the Tennis Warehouse playtest review (PSRF97, August 2016; product page retired)
+    headSize: 97, weight: 340, balance: 30.5, swingweight: 335, swingweightType: "strung", stiffness: 68, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#1a1a1a", "#1a1a1a"],
+    image: "img/wilson-pro-staff-rf97-autograph-2016.jpg" },
+  { id: "wilson-pro-staff-rf97-autograph-2014", brand: "Wilson", model: "Pro Staff RF97 Autograph (2014)", line: "Pro Staff RF97", year: 2014,
+    // unstrung weight/balance and beam from a retailer listing of Wilson's spec (tennisnuts.com, WRT72480U; wilson.com blocks automated access);
+    // swingweight/stiffness from the Tennis Warehouse playtest review (PS97RF, August 2014; product page retired)
+    headSize: 97, weight: 340, balance: 30.5, swingweight: 335, swingweightType: "strung", stiffness: 68, beam: "21.5", length: 27, pattern: "16x19",
+    colors: ["#d32f2f", "#b5651d"],
+    image: "img/wilson-pro-staff-rf97-autograph-2014.jpg" },
   { id: "wilson-blade-98-16x19-v10", brand: "Wilson", model: "Blade 98 16x19 V10", line: "Blade 98 16x19", year: 2026,
     // year: Tennis Warehouse review date (WB9810review, June 2026)
     headSize: 98, weight: 305, balance: 32.0, swingweight: 322, swingweightType: "strung", stiffness: 61, beam: "21.5→20.5", length: 27, pattern: "16x19",

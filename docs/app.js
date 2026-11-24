@@ -56,7 +56,10 @@
   // Min/max filters ("More filters"). Balance filters on the whole pts HL shown on the cards.
   const RANGE_FIELDS = [
     { key: "weight" }, { key: "swingweight" }, { key: "stiffness" }, { key: "balance", unit: "pts HL", round: true },
-  ].map(rf => { const f = field(rf.key); return { ...rf, f, unit: rf.unit ?? (f.unit || "").trim() }; });
+  ].map(rf => {
+    const f = field(rf.key), unit = rf.unit ?? (f.unit || "").trim();
+    return { ...rf, f, unit, name: f.label + (unit ? ` (${unit})` : "") };
+  });
   const rangeVal = (rf, v) => !has(v) ? null : rf.round ? Math.round(v) : v;
   // "Find similar": distance between two rackets over these specs, each scaled by its spread across all rackets
   // (z-scores), as a root mean square over the specs both rackets publish. Fewer than 3 shared specs: not ranked.
@@ -281,13 +284,13 @@
     rf.step = vals.every(Number.isInteger) ? 1 : 0.5;
     rf.bounds = [Math.floor(Math.min(...vals) / rf.step) * rf.step, Math.ceil(Math.max(...vals) / rf.step) * rf.step];
     // Histogram behind the slider: how many rackets at each value, in at most ~24 bars, over every racket.
-    const [lo, hi] = rf.bounds, w = rf.step * Math.ceil(((hi - lo) / rf.step + 1) / 24);
+    const [lo, hi] = rf.bounds;
+    rf.binW = rf.step * Math.ceil(((hi - lo) / rf.step + 1) / 24);
     rf.bins = [];
     vals.forEach(v => {
-      const j = Math.floor((v - lo) / w + 1e-9);
+      const j = Math.floor((v - lo) / rf.binW + 1e-9);
       rf.bins[j] = (rf.bins[j] || 0) + 1;
     });
-    rf.binW = w;
   });
   // One bar per bin, 1000 units = the slider's travel; data-a/data-b: the bin's first and last value.
   const histSvg = rf => {
@@ -303,7 +306,7 @@
   };
   $("rangeInputs").innerHTML = RANGE_FIELDS.map(rf => {
     const [lo, hi] = rf.bounds;
-    const name = rf.f.label + (rf.unit ? ` (${rf.unit})` : "");
+    const name = rf.name;
     const slider = (end, v) => `<input id="${end}-${rf.key}" type="range" min="${lo}" max="${hi}" step="${rf.step}" value="${v}" aria-label="${esc(name)} ${end}imum">`;
     return `<div class="range-field"><div class="range-label"><span>${icon(rf.f.icon)}${esc(name)}</span><output id="out-${rf.key}" class="range-out"></output></div>
       ${histSvg(rf)}<div id="dual-${rf.key}" class="dual">${slider("min", lo)}${slider("max", hi)}</div></div>`;
@@ -603,6 +606,7 @@
       if (diffOnly && !differs) return "";
       const comparable = !f.group || new Set(rs.filter(r => has(f.num(r))).map(f.group)).size <= 1;
       const [lo, hi] = f.num ? ranges[f.key] : [0, 0];
+      const scaleTxt = v => f.scale ? f.scale(v) : `${+v.toFixed(1)}${f.unit || ""}`;
       // Highest / lowest among the selected rackets (ties all tagged); none when they're all equal.
       const tags = rs.map(() => "");
       if (f.extremes && comparable) {
@@ -611,7 +615,7 @@
         const mx = Math.max(...known), mn = Math.min(...known);
         if (known.length >= 2 && mx > mn) nums.forEach((n, i) => { tags[i] = n === mx ? f.extremes[0] : n === mn ? f.extremes[1] : ""; });
       }
-      const range = f.num && hi > lo ? `<span class="range">All rackets: ${esc(valTxt(f, lo))} – ${esc(valTxt(f, hi))}</span>` : "";
+      const range = f.num && hi > lo ? `<span class="range">All rackets: ${esc(scaleTxt(lo))} – ${esc(scaleTxt(hi))}</span>` : "";
       const cells = rs.map((r, i) => {
         let html = `<div class="val">${esc(vals[i])}</div>`;
         if (subs[i]) html += `<div class="sub">${esc(subs[i])}</div>`;
@@ -643,54 +647,48 @@
 
   // ---------- Generation charts above the compare table ----------
   // Comparing generations of one line: how each spec changed, one small chart per spec. Otherwise nothing.
-  const TREND_KEYS = ["weight", "balance", "swingweight", "stiffness"];
-  const valTxt = (f, v) => f.scale ? f.scale(v) : `${+v.toFixed(1)}${f.unit || ""}`;
-  const shortTxt = (f, v) => f.key === "balance" ? String(Math.round(v)) : String(+v.toFixed(1)); // unit is in the title
-  const unitTitle = f => f.key === "balance" ? "Balance (pts HL)" : f.label + (f.unit ? ` (${f.unit.trim()})` : "");
-  const nameOf = r => `${r.brand} ${r.model}`;
+  // Charted like the sliders (RANGE_FIELDS): same title and unit, and balance in whole pts, as the table shows it.
+  const TREND_FIELDS = ["weight", "balance", "swingweight", "stiffness"].map(k => RANGE_FIELDS.find(rf => rf.key === k));
 
   function renderTrends(rs) {
     const a = rs[0], g = lineOf(a), sameLine = g && rs.every(r => r.line === a.line);
     const W = Math.max(280, $("trends").clientWidth || $("compare").clientWidth);
-    $("trends").innerHTML = sameLine ? trendCharts(a, g, rs, W) : "";
+    $("trends").innerHTML = sameLine ? trendCharts(g, rs, W) : "";
   }
 
-  function trendCharts(a, g, rs, W) {
+  function trendCharts(g, rs, W) {
     const n = g.length, colsN = W >= 760 ? 4 : W >= 420 ? 2 : 1, gap = 12;
     const cw = Math.floor((W - gap * (colsN - 1)) / colsN) - 2, ch = 168; // - 2: the card border
     const m = { l: 10, r: 10, t: 22, b: 30 };
     const sx = i => m.l + ((i + 0.5) / n) * (cw - m.l - m.r);
-    const charts = TREND_KEYS.map(k => {
-      const f = field(k), numOf = r => { const v = f.num(r); return has(v) && k === "balance" ? Math.round(v) : v; };
-      // Balance is plotted in whole pts, as labelled and shown in the table, so a 0.1 cm change isn't drawn as a drop.
-      const pts = g.map((r, i) => ({ r, i, v: numOf(r) })), known = pts.filter(p => has(p.v));
+    const charts = TREND_FIELDS.map(rf => {
+      const f = rf.f, pts = g.map((r, i) => ({ r, i, v: rangeVal(rf, f.num(r)) })), known = pts.filter(p => has(p.v));
       if (!known.length) return "";
       const lo = Math.min(...known.map(p => p.v)), hi = Math.max(...known.map(p => p.v));
       const pad = (hi - lo) * 0.25 || Math.max(1, Math.abs(hi) * 0.02);
       const sy = v => m.t + (1 - (v - (lo - pad)) / (hi - lo + 2 * pad)) * (ch - m.t - m.b);
       // A spec a generation doesn't publish breaks the line; the gap is never filled in.
-      let path = "", prev = null;
+      let path = "", pen = false;
       pts.forEach(p => {
-        if (!has(p.v)) { prev = null; return; }
-        path += `${prev ? "L" : "M"}${sx(p.i).toFixed(1)} ${sy(p.v).toFixed(1)}`;
-        prev = p;
+        if (has(p.v)) path += `${pen ? "L" : "M"}${sx(p.i).toFixed(1)} ${sy(p.v).toFixed(1)}`;
+        pen = has(p.v);
       });
       const dots = pts.map(p => {
         const x = sx(p.i), li = rs.indexOf(p.r), on = li >= 0;
         const lbl = `<text class="tick" x="${x}" y="${ch - 10}" text-anchor="middle">${esc(has(p.r.year) ? String(p.r.year) : "—")}</text>`;
         if (!has(p.v)) return lbl + `<text class="na" x="${x}" y="${(m.t + ch - m.b) / 2}" text-anchor="middle">${NA}</text>`;
-        const y = sy(p.v), title = `<title>${esc(`${nameOf(p.r)}: ${f.fmt(p.r)}`)}</title>`;
-        return lbl + `<text class="val" x="${x}" y="${y - 12}" text-anchor="middle">${esc(shortTxt(f, p.v))}</text>`
+        const y = sy(p.v), title = `<title>${esc(`${p.r.brand} ${p.r.model}: ${f.fmt(p.r)}`)}</title>`;
+        return lbl + `<text class="val" x="${x}" y="${y - 12}" text-anchor="middle">${+p.v.toFixed(1)}</text>`
           + (on ? `<g class="pick-mark"><circle cx="${x}" cy="${y}" r="8"/><text x="${x}" y="${y + 3.5}" text-anchor="middle">${LETTERS[li]}</text>${title}</g>`
                 : `<g class="gen-dot"><circle cx="${x}" cy="${y}" r="4.5"/>${title}</g>`);
       }).join("");
-      const summary = `${unitTitle(f)} by generation: ` + pts.map(p => `${p.r.model} ${f.fmt(p.r)}`).join(", ");
-      return `<figure class="trend"><figcaption>${icon(f.icon)}${esc(unitTitle(f))}</figcaption>
+      const summary = `${rf.name} by generation: ` + pts.map(p => `${p.r.model} ${f.fmt(p.r)}`).join(", ");
+      return `<figure class="trend"><figcaption>${icon(f.icon)}${esc(rf.name)}</figcaption>
         <svg width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}" role="img" aria-label="${esc(summary)}">
         <path class="trend-line" d="${path}"/>${dots}</svg></figure>`;
     }).join("");
     const shown = rs.length < n ? ` Lettered dots are the ${rs.length} in the table; the other${n - rs.length > 1 ? "s are" : " is"} shown faint.` : "";
-    return `<div class="charts-head"><h3>How the ${esc(a.brand + " " + a.line)} changed</h3><span class="muted">All ${n} generations on the site, oldest first.${shown}</span></div>
+    return `<div class="charts-head"><h3>How the ${esc(g[0].brand + " " + g[0].line)} changed</h3><span class="muted">All ${n} generations on the site, oldest first.${shown}</span></div>
       <div class="trends" style="--cols:${colsN}">${charts}</div>`;
   }
 

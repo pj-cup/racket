@@ -382,11 +382,10 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 .trend .gen-dot circle { fill: color-mix(in srgb, var(--muted) 70%, var(--surface)); stroke: var(--surface); stroke-width: 2; }
 .trend .val { fill: var(--text); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .trend .na { fill: var(--muted); font-size: 12px; }
-.data-only .charts { display: none; }
 
 /* "Compact": just the values, compact, so the whole table fits on one screen. */
 .data-only thead .pic, .data-only tbody th .hint, .data-only tbody th .range,
-.data-only td .delta, .data-only td .tag-line, .data-only .track { display: none; }
+.data-only td .delta, .data-only td .tag-line, .data-only .track, .data-only .charts { display: none; }
 .data-only th, .data-only td { padding-top: 6px; padding-bottom: 6px; }
 .data-only tr.group th { padding-top: 4px; padding-bottom: 4px; }
 .data-only td .val { font-size: 1rem; }

@@ -2,10 +2,12 @@
 Browse tennis racket specs and compare rackets side by side.
 
 ## Features
-- Search, filter by brand and head size, and sort by any spec.
-- Thumbnail or list view. The site remembers your choice.
+- Search, filter by brand and head size, set min/max for weight, swing weight, stiffness and balance, and sort by any spec.
+- Thumbnail, list or spec map view. The map plots every racket on two specs you pick (weight vs swing weight by default). The site remembers your choice.
+- Find similar: rank rackets by how close they are to one racket on head size, weight, balance, swing weight and stiffness.
 - Full-screen photo viewer with zoom and pan.
-- Compare rackets side by side. The comparison link is shareable (`#compare=<id>,<id>`).
+- Compare rackets side by side.
+- Every view is a shareable link: the browse filters, sort and view live in the URL hash, and so does a comparison (`#compare=<id>,<id>`).
 
 ## View it
 No build step. Open `docs/index.html` in a browser, or serve the folder:

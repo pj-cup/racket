@@ -255,22 +255,41 @@
     $("brand").insertAdjacentHTML("beforeend", `<option>${esc(b)}</option>`);
   });
 
+  // Each min/max filter is a two-handle slider over every racket's range. A handle at its end of the track
+  // means "no limit" on that side, so rackets past the current extremes (and future ones) aren't cut off.
+  RANGE_FIELDS.forEach(rf => {
+    const vals = data.map(r => rangeVal(rf, rf.f.num(r))).filter(has);
+    rf.step = vals.every(Number.isInteger) ? 1 : 0.5;
+    rf.bounds = [Math.floor(Math.min(...vals) / rf.step) * rf.step, Math.ceil(Math.max(...vals) / rf.step) * rf.step];
+  });
   $("rangeInputs").innerHTML = RANGE_FIELDS.map(rf => {
-    const [lo, hi] = ranges[rf.key];
+    const [lo, hi] = rf.bounds;
     const name = rf.f.label + (rf.unit ? ` (${rf.unit})` : "");
-    return `<div class="range-field"><span class="range-label">${icon(rf.f.icon)}${esc(name)}</span>
-      <input id="min-${rf.key}" type="number" inputmode="decimal" step="1" placeholder="${rangeVal(rf, lo)}" aria-label="${esc(name)} minimum">
-      <span class="muted" aria-hidden="true">–</span>
-      <input id="max-${rf.key}" type="number" inputmode="decimal" step="1" placeholder="${rangeVal(rf, hi)}" aria-label="${esc(name)} maximum"></div>`;
+    const slider = (end, v) => `<input id="${end}-${rf.key}" type="range" min="${lo}" max="${hi}" step="${rf.step}" value="${v}" aria-label="${esc(name)} ${end}imum">`;
+    return `<div class="range-field"><div class="range-label"><span>${icon(rf.f.icon)}${esc(name)}</span><output id="out-${rf.key}" class="range-out"></output></div>
+      <div id="dual-${rf.key}" class="dual">${slider("min", lo)}${slider("max", hi)}</div></div>`;
   }).join("");
+  const setRange = (rf, min, max) => {
+    $("min-" + rf.key).value = has(min) && isFinite(min) ? min : rf.bounds[0];
+    $("max-" + rf.key).value = has(max) && isFinite(max) ? max : rf.bounds[1];
+  };
 
-  // Active min/max filters: [{ rf, min, max, lo, hi }]: min/max as typed, lo/hi as numbers with open ends at ±Infinity.
+  // Active min/max filters: [{ rf, min, max, lo, hi }]: min/max as hash text ("" = open end), lo/hi as numbers (±Infinity).
   function activeRanges() {
     return RANGE_FIELDS.map(rf => {
-      const min = $("min-" + rf.key).value.trim(), max = $("max-" + rf.key).value.trim();
-      if (min === "" && max === "") return null;
-      return { rf, min, max, lo: min === "" ? -Infinity : +min, hi: max === "" ? Infinity : +max };
+      const a = +$("min-" + rf.key).value, b = +$("max-" + rf.key).value, [lo, hi] = rf.bounds;
+      if (a <= lo && b >= hi) return null;
+      return { rf, min: a > lo ? String(a) : "", max: b < hi ? String(b) : "", lo: a > lo ? a : -Infinity, hi: b < hi ? b : Infinity };
     }).filter(Boolean);
+  }
+  // Slider readout and the filled part of the track.
+  function paintRange(rf) {
+    const a = +$("min-" + rf.key).value, b = +$("max-" + rf.key).value, [lo, hi] = rf.bounds;
+    const dual = $("dual-" + rf.key);
+    dual.style.setProperty("--a", (a - lo) / (hi - lo));
+    dual.style.setProperty("--b", (b - lo) / (hi - lo));
+    $("min-" + rf.key).style.zIndex = a === b && a > (lo + hi) / 2 ? 2 : ""; // both at the top end: keep the min handle grabbable
+    $("out-" + rf.key).textContent = a <= lo && b >= hi ? "Any" : `${a} – ${b}`;
   }
 
   // The browse list for the current controls: { list, ref, hiddenNoSpec }.
@@ -335,6 +354,7 @@
     $("count").textContent = `${found.length} of ${data.length} rackets` + (ref ? " + reference" : "") +
       (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + (view === "map" ? " · Click a dot to compare" : " · Click a photo to compare");
     $("moreCount").textContent = active.length ? ` (${active.length})` : "";
+    RANGE_FIELDS.forEach(paintRange);
     if (ref) $("sort").value = "similar"; // the hidden option, so the menu reads "Most similar"
     $("similarBanner").hidden = !ref;
     if (ref) $("similarName").textContent = `${ref.brand} ${ref.model}`;
@@ -562,8 +582,7 @@
     mapY = MAP_AXES[p.get("y")] ? p.get("y") : "swingweight";
     RANGE_FIELDS.forEach(rf => {
       const [lo = "", hi = ""] = (p.get(rf.key) || "").split("~");
-      $("min-" + rf.key).value = lo !== "" && isFinite(lo) ? lo : "";
-      $("max-" + rf.key).value = hi !== "" && isFinite(hi) ? hi : "";
+      setRange(rf, lo === "" ? null : +lo, hi === "" ? null : +hi);
     });
     if (activeRanges().length) $("more").open = true;
   }
@@ -583,7 +602,7 @@
     if (view === "map" && mapX !== "weight") p.set("x", mapX);
     if (view === "map" && mapY !== "swingweight") p.set("y", mapY);
     active.forEach(({ rf, min, max }) => p.set(rf.key, min + "~" + max));
-    browseHash = p.toString() ? "#" + p : "";
+    browseHash = p.toString() ? "#" + String(p).replace(/%7E/g, "~") : ""; // keep "295~310" readable
     if (location.hash !== browseHash) history.replaceState(null, "", browseHash || location.pathname + location.search);
   }
 
@@ -628,9 +647,14 @@
 
   // ---------- Events ----------
   ["q", "brand", "head"].forEach(id => $(id).addEventListener("input", renderGrid));
-  $("rangeInputs").addEventListener("input", renderGrid);
+  $("rangeInputs").addEventListener("input", e => {
+    const [end, key] = e.target.id.split("-"); // handles can't cross: the one being dragged stops at the other
+    const other = $((end === "min" ? "max-" : "min-") + key);
+    if (end === "min" ? +e.target.value > +other.value : +e.target.value < +other.value) e.target.value = other.value;
+    renderGrid();
+  });
   $("resetRanges").addEventListener("click", () => {
-    $("rangeInputs").querySelectorAll("input").forEach(i => { i.value = ""; });
+    RANGE_FIELDS.forEach(rf => setRange(rf, null, null));
     renderGrid();
   });
   $("sort").addEventListener("input", () => { sortDir = 1; similarId = null; renderGrid(); });

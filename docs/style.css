@@ -87,22 +87,43 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .icon { display: inline-block; width: 1.1em; height: 1.1em; margin-right: 0.3em; vertical-align: -0.2em; stroke-width: 2; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-.controls input, .controls select, .range-field input, .map-bar select {
+.controls input, .controls select, .map-bar select {
   font: inherit; color: var(--text); background: var(--surface);
   border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px;
 }
 .controls input { flex: 1 1 220px; min-width: 0; }
 
-/* More filters: min/max per spec. */
+/* More filters: a two-handle slider per spec. */
 .more-filters { margin-bottom: 8px; }
 .more-filters summary { cursor: pointer; color: var(--muted); width: max-content; padding: 2px 0; }
 .more-filters summary:hover, .more-filters[open] summary { color: var(--text); }
 .more-count { color: var(--accent); font-weight: 600; }
-.range-body { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 16px; padding: 8px 0 4px; }
-.range-inputs { display: flex; flex-wrap: wrap; gap: 10px 16px; }
-.range-field { display: grid; grid-template-columns: 76px auto 76px; align-items: center; gap: 2px 6px; }
-.range-label { grid-column: 1 / -1; font-size: 0.85rem; color: var(--muted); }
-.range-field input { width: 100%; padding: 6px 8px; font-variant-numeric: tabular-nums; }
+.range-body { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 24px; padding: 8px 0 4px; }
+.range-inputs { flex: 1 1 600px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 28px; }
+.range-label { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; color: var(--muted); }
+.range-out { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Two range inputs stacked on one track; only their thumbs take the pointer. --a/--b: handle positions, 0–1. */
+.dual { --a: 0; --b: 1; --thumb: 18px; position: relative; height: 28px; }
+.dual::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px; border-radius: 2px;
+  background: linear-gradient(to right,
+    var(--line) calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--a)),
+    var(--accent) calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--a)) calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--b)),
+    var(--line) calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--b)));
+}
+.dual input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.dual input::-webkit-slider-runnable-track { height: 100%; background: none; }
+.dual input::-moz-range-track { background: none; }
+.dual input::-webkit-slider-thumb {
+  -webkit-appearance: none; pointer-events: auto; cursor: grab; width: var(--thumb); height: var(--thumb); margin-top: 5px;
+  border-radius: 50%; background: var(--surface); border: 2px solid var(--accent);
+}
+.dual input::-moz-range-thumb {
+  pointer-events: auto; cursor: grab; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent);
+}
+.dual input:focus-visible { outline: none; }
+.dual input:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dual input:focus-visible::-moz-range-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 .card {
@@ -115,7 +136,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
   height: 180px; display: flex; align-items: center; justify-content: center; overflow: hidden;
 }
 .pic[data-zoom] { cursor: zoom-in; }
-.pic[data-zoom]:focus-visible, .range-field input:focus-visible, .more-filters summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pic[data-zoom]:focus-visible, .more-filters summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pic:has(img) { background: #ffffff; padding: 8px; } /* product shots are made for a light background */
 .pic svg, .pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .pic.small { width: 100%; max-width: 160px; height: 84px; margin-bottom: 8px; }

@@ -412,7 +412,7 @@
   }
 
   // Browse view: "grid" (thumbnails) or "list" (one row per racket). Remembered per browser.
-  const VIEWS = ["grid", "list", "map"];
+  const VIEWS = ["grid", "list", "map", "lines"];
   let view = "grid";
   try { const v = localStorage.getItem("view"); if (VIEWS.includes(v)) view = v; } catch {}
 
@@ -426,7 +426,7 @@
     const { list: found, ref, hiddenNoSpec } = filtered(active);
     const list = ref ? [ref, ...found] : found;
     $("count").textContent = `${found.length} of ${data.length} rackets` + (ref ? " + reference" : "") +
-      (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + (view === "map" ? " · Click a dot to compare" : " · Click a photo to compare");
+      (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + (view === "map" ? " · Click a dot to compare" : view === "lines" ? " · Click a line to compare" : " · Click a photo to compare");
     const nMore = active.length + $("latestOnly").checked;
     $("moreCount").textContent = nMore ? ` (${nMore})` : "";
     RANGE_FIELDS.forEach(paintRange);
@@ -443,6 +443,7 @@
     document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
     if (view === "list") return renderList(list, full, ref);
     if (view === "map") return renderMap(list, full, ref);
+    if (view === "lines") return renderLines(list, full, ref);
     $("grid").innerHTML = list.map(r => {
       const on = selected.includes(r.id);
       const rows = FIELDS.filter(f => CARD_FIELDS.includes(f.key))
@@ -484,6 +485,29 @@
     stiffness: "Stiffness (RA)", headSize: "Head size (sq in)", length: "Length (in)",
   };
   let mapX = "weight", mapY = "swingweight";
+
+  // Color by brand (map and lines views). Only the three biggest brands get a hue; the rest share "Other" gray.
+  // Dots overlap freely on a scatter, so every pair of hues must stay apart: three validated hues is the cap.
+  // hlBrand: one brand group shown at full strength, the rest faded (kept for context, unlike the Brand filter).
+  const BRAND_HUES = ["Wilson", "Head", "Babolat"];
+  const HL_GROUPS = [...BRAND_HUES, "Other"];
+  let colorBy = "none", hlBrand = null;
+  const brandGroup = r => BRAND_HUES.includes(r.brand) ? r.brand : "Other";
+  // " b1" … " b3" (" b0" = Other) and " dim" when another group is highlighted; "" when not coloring by brand.
+  const brandCls = r => colorBy !== "brand" ? ""
+    : ` b${BRAND_HUES.indexOf(r.brand) + 1}` + (hlBrand && brandGroup(r) !== hlBrand ? " dim" : "");
+  const colorControls = () => {
+    const sel = `<label>Color <select data-color aria-label="Color by">${[["none", "None"], ["brand", "Brand"]].map(([v, t]) =>
+      `<option value="${v}"${v === colorBy ? " selected" : ""}>${t}</option>`).join("")}</select></label>`;
+    if (colorBy !== "brand") return { sel, keys: "" };
+    const keys = HL_GROUPS.map((b, i) => {
+      const n = data.filter(r => brandGroup(r) === b).length;
+      return `<button type="button" class="key hl-key b${(i + 1) % 4}${hlBrand && hlBrand !== b ? " dim" : ""}" data-hl="${esc(b)}" aria-pressed="${hlBrand === b}"
+        title="${hlBrand === b ? "Show all brands" : `Highlight ${esc(b)}`}"><svg viewBox="0 0 12 12" aria-hidden="true"><circle class="mark" cx="6" cy="6" r="4.5"/></svg>${esc(b)} <span class="muted">${n}</span></button>`;
+    }).join("");
+    return { sel, keys };
+  };
+
   function niceTicks(lo, hi, n) {
     const raw = (hi - lo) / n, mag = 10 ** Math.floor(Math.log10(raw)), e = raw / mag;
     const step = mag * (e < 1.5 ? 1 : e < 3 ? 2 : e < 7 ? 5 : 10);
@@ -523,11 +547,29 @@
       pos.set(r.id, [sx(fx.num(r)) + rad * Math.cos(a), sy(fy.num(r)) + rad * Math.sin(a)]);
     }));
 
+    // Generation paths: each line's shown generations with a year, oldest to newest, an arrowhead on every step.
+    // A generation without a year is left out (its place in the order is never guessed). Steps too short to see
+    // (e.g. a cosmetic edition on the same frame) are skipped.
+    let genPaths = "";
+    lines.forEach(gen => {
+      const rs = gen.filter(r => has(r.year) && pos.has(r.id));
+      const cls = "gen-path" + (colorBy === "brand" ? brandCls(rs[0] || {}) : "");
+      for (let i = 1; i < rs.length; i++) {
+        const [x0, y0] = pos.get(rs[i - 1].id), [x1, y1] = pos.get(rs[i].id);
+        const len = Math.hypot(x1 - x0, y1 - y0);
+        if (len < 22) continue;
+        const ux = (x1 - x0) / len, uy = (y1 - y0) / len, a = [x0 + ux * 7, y0 + uy * 7], b = [x1 - ux * 8, y1 - uy * 8];
+        const head = [[b[0], b[1]], [b[0] - ux * 7 - uy * 4, b[1] - uy * 7 + ux * 4], [b[0] - ux * 7 + uy * 4, b[1] - uy * 7 - ux * 4]];
+        const f = v => v.toFixed(1);
+        genPaths += `<g class="${cls}"><path d="M${f(a[0])} ${f(a[1])}L${f(b[0] - ux * 5)} ${f(b[1] - uy * 5)}"/><polygon points="${head.map(p => p.map(f).join(" ")).join(" ")}"/></g>`;
+      }
+    });
+
     const rank = r => selected.includes(r.id) || r === ref ? 1 : 0;
     const dots = [...shown].sort((a, b) => rank(a) - rank(b)).map(r => {
       const [x, y] = pos.get(r.id), i = selected.indexOf(r.id), on = i >= 0;
       const name = `${r.brand} ${r.model}`;
-      const cls = "dot" + (on ? " on" : "") + (r === ref ? " ref" : "") + (!on && full ? " full" : "");
+      const cls = "dot" + (on ? " on" : "") + (r === ref ? " ref" : "") + (!on && full ? " full" : "") + brandCls(r);
       let label = "";
       if (on || r === ref) {
         const right = x < W - 170;
@@ -540,13 +582,90 @@
     }).join("");
 
     const missing = list.length - shown.length;
-    const legend = `<span class="key"><svg viewBox="0 0 12 12" aria-hidden="true"><circle class="mark" cx="6" cy="6" r="4"/></svg>Racket</span>`
+    const { sel, keys } = colorControls();
+    const legend = keys + (colorBy === "brand" ? "" : `<span class="key"><svg viewBox="0 0 12 12" aria-hidden="true"><circle class="mark" cx="6" cy="6" r="4"/></svg>Racket</span>`)
       + `<span class="key on"><svg viewBox="0 0 12 12" aria-hidden="true"><circle class="mark" cx="6" cy="6" r="5"/></svg>Picked for compare</span>`
-      + (ref ? `<span class="key ref"><svg viewBox="0 0 20 20" aria-hidden="true"><circle class="ring" cx="10" cy="10" r="8"/><circle class="mark" cx="10" cy="10" r="4"/></svg>Reference</span>` : "");
-    $("grid").innerHTML = `<div class="map-bar">${axisSelect("x", mapX)}${axisSelect("y", mapY)}<div class="map-legend">${legend}</div></div>
+      + (ref ? `<span class="key ref"><svg viewBox="0 0 20 20" aria-hidden="true"><circle class="ring" cx="10" cy="10" r="8"/><circle class="mark" cx="10" cy="10" r="4"/></svg>Reference</span>` : "")
+      + (genPaths ? `<span class="key gen"><svg viewBox="0 0 20 12" aria-hidden="true"><path d="M2 6h11"/><polygon points="18 6 11 2 11 10"/></svg>Generations, oldest to newest</span>` : "");
+    $("grid").innerHTML = `<div class="map-bar">${axisSelect("x", mapX)}${axisSelect("y", mapY)}${sel}<div class="map-legend">${legend}</div></div>
       <div class="map-plot"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(`${fy.label} against ${fx.label}`)}">
-        <g aria-hidden="true">${g}</g>${dots}</svg><div id="mapTip" class="map-tip" role="tooltip" hidden></div></div>
+        <g aria-hidden="true">${g}${genPaths}</g>${dots}</svg><div id="mapTip" class="map-tip" role="tooltip" hidden></div></div>
       ${missing ? `<p class="muted map-note">${missing} racket${missing > 1 ? "s" : ""} not shown: ${esc(fx.label.toLowerCase())} or ${esc(fy.label.toLowerCase())} not published.</p>` : ""}
+      ${list.length ? "" : NONE}`;
+  }
+
+  // ---------- Spec lines (parallel coordinates) ----------
+  // One vertical axis per spec, one line per racket across them, so trade-offs over every spec show at once.
+  // Axes cover every racket's range, like the map. An unpublished spec breaks the line (never filled in).
+  const LINE_UNITS = { headSize: "sq in", weight: "g", balance: "pts HL", swingweight: "strung", stiffness: "RA" };
+  function renderLines(list, full, ref) {
+    const fs = SIM_KEYS.map(field), n = fs.length;
+    const W = Math.max(300, $("grid").clientWidth), narrow = W < 560;
+    const H = Math.round(Math.min(480, Math.max(340, W * 0.5)));
+    const m = { l: 44, r: narrow ? 30 : 150, t: 46, b: 16 };
+    const ax = i => m.l + (i * (W - m.l - m.r)) / (n - 1);
+    const doms = fs.map(f => { const [lo, hi] = ranges[f.key]; const pad = (hi - lo) * 0.06 || 1; return [lo - pad, hi + pad]; });
+    const sy = (i, v) => { const [lo, hi] = doms[i]; return H - m.b - ((v - lo) / (hi - lo)) * (H - m.t - m.b); };
+    const active = activeRanges();
+
+    let labels = "";
+    const g = fs.map((f, i) => {
+      const x = ax(i), [lo, hi] = doms[i];
+      // The kept range of an active slider filter, as a band on its axis. Balance filters on whole pts: ± 0.5.
+      const a = active.find(a => a.rf.key === f.key), half = a?.rf.round ? 0.5 : 0;
+      const band = a ? (() => {
+        const top = sy(i, Math.min(hi, a.hi + half)), bot = sy(i, Math.max(lo, a.lo - half));
+        return `<rect class="pc-band" x="${x - 6}" y="${top.toFixed(1)}" width="12" height="${(bot - top).toFixed(1)}" rx="3"/>`;
+      })() : "";
+      const tv = niceTicks(lo, hi, narrow ? 3 : 5);
+      // Tick labels go over the lines (drawn after them), with a surface halo so they stay readable.
+      labels += tv.map(v => `<text class="tick" x="${x - 6}" y="${sy(i, v) + 4}" text-anchor="end">${+v.toFixed(2)}</text>`).join("")
+        + `<text class="axis-title" x="${x}" y="${m.t - 24}" text-anchor="middle">${esc(f.label)}</text>
+        <text class="tick" x="${x}" y="${m.t - 10}" text-anchor="middle">${esc(LINE_UNITS[f.key])}</text>`;
+      return `${band}<line class="pc-axis" x1="${x}" x2="${x}" y1="${m.t}" y2="${H - m.b}"/>`
+        + tv.map(v => `<line class="pc-tick" x1="${x - 3}" x2="${x}" y1="${sy(i, v)}" y2="${sy(i, v)}"/>`).join("");
+    }).join("");
+
+    const pathOf = r => {
+      let d = "", pen = false, last = null, mid = null;
+      fs.forEach((f, i) => {
+        const v = f.num(r);
+        if (has(v)) {
+          const x = ax(i), y = sy(i, v);
+          d += `${pen ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+          last = [x, y];
+          if (!mid || i <= (n - 1) / 2) mid = [x, y]; // tooltip anchor: the middle axis, or the nearest before it
+        }
+        pen = has(v);
+      });
+      return { d, last, mid };
+    };
+    const shown = list.filter(r => fs.filter(f => has(f.num(r))).length >= 2);
+    // Draw order: plain, then the highlighted brand, the reference, and picked rackets on top.
+    const rank = r => selected.includes(r.id) ? 3 : r === ref ? 2 : hlBrand && colorBy === "brand" && brandGroup(r) === hlBrand ? 1 : 0;
+    const paths = [...shown].sort((a, b) => rank(a) - rank(b)).map(r => {
+      const { d, last, mid } = pathOf(r), i = selected.indexOf(r.id), on = i >= 0;
+      const cls = "pc" + (on ? " on" : "") + (r === ref ? " ref" : "") + (!on && full ? " full" : "") + brandCls(r);
+      let end = "";
+      if (on) {
+        end = `<circle class="pc-end" cx="${last[0]}" cy="${last[1]}" r="8"/><text class="dot-letter" x="${last[0]}" y="${last[1] + 3.5}" text-anchor="middle">${LETTERS[i]}</text>`;
+        if (!narrow) end += `<text class="dot-label" x="${last[0] + 14}" y="${last[1] + 4}">${esc(r.model)}</text>`;
+      } else if (r === ref && !narrow) end = `<text class="dot-label" x="${last[0] + 10}" y="${last[1] + 4}">${esc(r.model)}</text>`;
+      const specs = fs.map(f => `${f.label} ${f.fmt(r)}`).join(", ");
+      return `<g class="${cls}" data-dot="${esc(r.id)}" data-tx="${mid[0].toFixed(1)}" data-ty="${mid[1].toFixed(1)}" tabindex="0" role="button" aria-pressed="${on}"${!on && full ? ' aria-disabled="true"' : ""}
+        aria-label="${esc(`${r.brand} ${r.model}: ${specs}. ${on ? "Remove from" : "Add to"} compare`)}"><path class="hit" d="${d}"/><path class="pc-line" d="${d}"/>${end}</g>`;
+    }).join("");
+
+    const missing = list.length - shown.length;
+    const { sel, keys } = colorControls();
+    const legend = keys + (colorBy === "brand" ? "" : `<span class="key"><svg viewBox="0 0 16 12" aria-hidden="true"><path class="pc-line" d="M1 9 8 3l7 4"/></svg>Racket</span>`)
+      + `<span class="key on"><svg viewBox="0 0 16 12" aria-hidden="true"><path class="pc-line" d="M1 9 8 3l7 4"/></svg>Picked for compare</span>`
+      + (ref ? `<span class="key ref"><svg viewBox="0 0 16 12" aria-hidden="true"><path class="pc-line" d="M1 9 8 3l7 4"/></svg>Reference</span>` : "")
+      + (active.length ? `<span class="key"><svg viewBox="0 0 12 12" aria-hidden="true"><rect class="pc-band" x="3" y="0" width="6" height="12" rx="2"/></svg>Filter range</span>` : "");
+    $("grid").innerHTML = `<div class="map-bar">${sel}<div class="map-legend">${legend}</div></div>
+      <div class="map-plot lines-plot"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="Every racket's specs, one line per racket">
+        <g aria-hidden="true">${g}</g>${paths}<g class="pc-labels" aria-hidden="true">${labels}</g></svg><div id="mapTip" class="map-tip" role="tooltip" hidden></div></div>
+      ${missing ? `<p class="muted map-note">${missing} racket${missing > 1 ? "s" : ""} not shown: fewer than 2 of these specs published.</p>` : ""}
       ${list.length ? "" : NONE}`;
   }
 
@@ -556,13 +675,15 @@
     if (!tip || (g && g === tipDot)) return;
     tipDot = g;
     if (!r) { tip.hidden = true; return; }
-    const fx = field(mapX), fy = field(mapY), on = selected.includes(r.id);
+    const on = selected.includes(r.id);
+    const fs = view === "lines" ? SIM_KEYS.map(field) : [field(mapX), field(mapY)];
     tip.innerHTML = `<span class="brand">${esc(r.brand)}</span><strong>${esc(r.model)}</strong>
-      <span>${esc(fx.label)}: ${esc(fx.fmt(r))}</span><span>${esc(fy.label)}: ${esc(fy.fmt(r))}</span>
+      ${fs.map(f => `<span>${esc(f.label)}: ${esc(f.fmt(r))}</span>`).join("")}
       <span class="muted">${on ? "Click to remove from compare" : g.classList.contains("full") ? "Up to 4 rackets" : "Click to add to compare"}</span>`;
     tip.hidden = false;
+    // Anchor: the dot's centre on the map; a point on the line (data-tx/ty) in the lines view.
     const c = g.querySelector(".mark"), box = tip.parentElement;
-    const x = +c.getAttribute("cx"), y = +c.getAttribute("cy");
+    const x = g.dataset.tx ? +g.dataset.tx : +c.getAttribute("cx"), y = g.dataset.ty ? +g.dataset.ty : +c.getAttribute("cy");
     const left = Math.min(Math.max(0, x - tip.offsetWidth / 2), box.clientWidth - tip.offsetWidth);
     tip.style.left = left + "px";
     tip.style.top = (y - tip.offsetHeight - 14 < 0 ? y + 16 : y - tip.offsetHeight - 14) + "px";
@@ -642,7 +763,62 @@
 
     $("table").dataset.cols = rs.length;
     $("table").innerHTML = head + `<tbody>${body || `<tr><td colspan="${rs.length + 1}" class="muted">No differences.</td></tr>`}</tbody>`;
-    renderTrends(rs);
+    renderCharts(rs);
+  }
+
+  const renderCharts = rs => { renderProfile(rs); renderTrends(rs); };
+
+  // ---------- Spec profile above the compare table ----------
+  // One row per spec, each spanning every racket's range: faint ticks for all rackets (where the field clusters),
+  // a lettered marker per compared racket, and a thin line joining each racket's markers down the rows.
+  // Each row has its own scale, so hovering a marker gives the real value.
+  function renderProfile(rs) {
+    const W = Math.max(280, $("profile").clientWidth || $("compare").clientWidth) - 2, narrow = W < 520; // - 2: the border
+    const fs = SIM_KEYS.map(field), rowH = 62;
+    const m = { l: narrow ? 92 : 120, r: 16, t: 10, b: 4 }, H = m.t + fs.length * rowH + m.b;
+    const sx = (f, v) => { const [lo, hi] = ranges[f.key]; return m.l + (hi > lo ? (v - lo) / (hi - lo) : 0.5) * (W - m.l - m.r); };
+    const cy = j => m.t + j * rowH + 24;
+    // Markers closer than 14px in a row would cover each other: stack each such cluster vertically, centred on the row.
+    const offs = fs.map(f => {
+      const o = rs.map(() => 0);
+      const xs = rs.map((r, i) => ({ i, x: has(f.num(r)) ? sx(f, f.num(r)) : null })).filter(p => p.x !== null).sort((a, b) => a.x - b.x || a.i - b.i);
+      for (let k = 0; k < xs.length;) {
+        let e = k + 1;
+        while (e < xs.length && xs[e].x - xs[e - 1].x < 14) e++;
+        const c = xs.slice(k, e).sort((a, b) => a.i - b.i);
+        c.forEach((p, q) => { o[p.i] = (q - (c.length - 1) / 2) * 13; });
+        k = e;
+      }
+      return o;
+    });
+    const off = (i, j) => offs[j][i];
+    const scaleTxt = (f, v) => f.scale ? f.scale(v) : `${+v.toFixed(1)}${f.unit || ""}`;
+    const rows = fs.map((f, j) => {
+      const y = cy(j), [lo, hi] = ranges[f.key];
+      const rug = data.map(f.num).filter(has).map(v => `<line class="rug" x1="${sx(f, v).toFixed(1)}" x2="${sx(f, v).toFixed(1)}" y1="${y - 5}" y2="${y + 5}"/>`).join("");
+      return `<text class="row-label" x="12" y="${y + 4}">${esc(f.label)}</text>
+        <line class="pf-track" x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}"/>${rug}
+        <text class="tick" x="${m.l}" y="${y + 34}">${esc(scaleTxt(f, lo))}</text>
+        <text class="tick" x="${W - m.r}" y="${y + 34}" text-anchor="end">${esc(scaleTxt(f, hi))}</text>`;
+    }).join("");
+    const racketLine = (r, i) => {
+      let d = "", pen = false;
+      fs.forEach((f, j) => {
+        const v = f.num(r);
+        if (has(v)) d += `${pen ? "L" : "M"}${sx(f, v).toFixed(1)} ${(cy(j) + off(i, j)).toFixed(1)}`;
+        pen = has(v);
+      });
+      const marks = fs.map((f, j) => {
+        const v = f.num(r);
+        if (!has(v)) return "";
+        const x = sx(f, v), y = cy(j) + off(i, j);
+        return `<g class="pick-mark"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.5"/><text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle">${LETTERS[i]}</text><title>${esc(`${LETTERS[i]} · ${r.brand} ${r.model}: ${f.label} ${f.fmt(r)}`)}</title></g>`;
+      }).join("");
+      return `<g class="pf-racket"><path class="pf-line" d="${d}"/>${marks}</g>`;
+    };
+    const summary = rs.map((r, i) => `${LETTERS[i]} ${r.brand} ${r.model}: ` + fs.map(f => `${f.label} ${f.fmt(r)}`).join(", ")).join("; ");
+    $("profile").innerHTML = `<div class="charts-head"><h3>Spec profile</h3><span class="muted">Where each racket sits among all ${data.length}. Faint ticks: every racket on the site.</span></div>
+      <div class="profile"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(summary)}">${rows}${rs.map(racketLine).join("")}</svg></div>`;
   }
 
   // ---------- Generation charts above the compare table ----------
@@ -711,6 +887,8 @@
     if (VIEWS.includes(v)) view = v;
     mapX = MAP_AXES[p.get("x")] ? p.get("x") : "weight";
     mapY = MAP_AXES[p.get("y")] ? p.get("y") : "swingweight";
+    colorBy = p.get("color") === "brand" ? "brand" : "none";
+    hlBrand = colorBy === "brand" && HL_GROUPS.includes(p.get("hl")) ? p.get("hl") : null;
     RANGE_FIELDS.forEach(rf => {
       const [lo = "", hi = ""] = (p.get(rf.key) || "").split("~");
       setRange(rf, lo === "" ? null : +lo, hi === "" ? null : +hi);
@@ -733,6 +911,10 @@
     if (view !== "grid") p.set("view", view);
     if (view === "map" && mapX !== "weight") p.set("x", mapX);
     if (view === "map" && mapY !== "swingweight") p.set("y", mapY);
+    if ((view === "map" || view === "lines") && colorBy === "brand") {
+      p.set("color", "brand");
+      if (hlBrand) p.set("hl", hlBrand);
+    }
     active.forEach(({ rf, min, max }) => p.set(rf.key, min + "~" + max));
     browseHash = p.toString() ? "#" + String(p).replace(/%7E/g, "~") : ""; // keep "295~310" readable
     if (location.hash !== browseHash) history.replaceState(null, "", browseHash || location.pathname + location.search);
@@ -833,6 +1015,12 @@
     if (again) { again.focus(); showTip(again); } // focus() usually shows it already; showTip skips a repeat
   };
   $("grid").addEventListener("change", e => {
+    if (e.target.matches("select[data-color]")) {
+      colorBy = e.target.value;
+      hlBrand = null;
+      renderGrid();
+      return $("grid").querySelector("select[data-color]").focus();
+    }
     const s = e.target.closest("select[data-axis]");
     if (!s) return;
     if (s.dataset.axis === "x") mapX = s.value; else mapY = s.value;
@@ -851,13 +1039,19 @@
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      if (!$("compare").hidden) renderTrends(selected.map(id => byId.get(id)));
-      else if (view === "map") renderGrid();
+      if (!$("compare").hidden) renderCharts(selected.map(id => byId.get(id)));
+      else if (view === "map" || view === "lines") renderGrid();
     }, 150);
   });
   $("grid").addEventListener("click", e => {
     const dot = e.target.closest("[data-dot]");
     if (dot) return toggleDot(dot);
+    const hl = e.target.closest("button[data-hl]");
+    if (hl) {
+      hlBrand = hlBrand === hl.dataset.hl ? null : hl.dataset.hl;
+      renderGrid();
+      return $("grid").querySelector(`button[data-hl="${CSS.escape(hl.dataset.hl)}"]`)?.focus();
+    }
     const h = e.target.closest("button[data-sort]");
     if (h) return sortBy(h.dataset.sort);
     const b = e.target.closest("button[data-id]");

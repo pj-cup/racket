@@ -42,6 +42,7 @@
           <button type="button" data-view="grid" aria-pressed="true" aria-label="Thumbnail view" title="Thumbnails"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5" rx="1"/><rect x="9.5" y="1.5" width="5" height="5" rx="1"/><rect x="1.5" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg></button>
           <button type="button" data-view="list" aria-pressed="false" aria-label="List view" title="List"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3h13M1.5 8h13M1.5 13h13"/></svg></button>
           <button type="button" data-view="map" aria-pressed="false" aria-label="Spec map view" title="Spec map"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 1.5v12.5h12.5"/><circle cx="6" cy="9.5" r="1.2"/><circle cx="9" cy="6" r="1.2"/><circle cx="12.5" cy="3.5" r="1.2"/><circle cx="11" cy="9" r="1.2"/></svg></button>
+          <button type="button" data-view="lines" aria-pressed="false" aria-label="Spec lines view" title="Spec lines"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 1.5v13M8 1.5v13M14 1.5v13"/><path d="M2 11 8 5l6 4"/></svg></button>
         </div>
         <button id="copyBrowse" class="btn ghost" type="button" title="Copy a link to this view, with its filters">Copy link</button>
       </div>
@@ -71,6 +72,7 @@
         <button id="copyLink" class="btn ghost" type="button">Copy link</button>
         <button id="back" class="btn ghost" type="button">← Back to list</button>
       </div>
+      <div id="profile" class="charts"></div>
       <div id="trends" class="charts"></div>
       <div class="table-wrap"><table id="table"></table></div>
     </section>

@@ -45,6 +45,13 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 325, swingweightType: "strung", stiffness: 69, beam: "23/26/23", length: 27.5, pattern: "16x19",
     colors: ["#1f5fbf", "#111827"],
     image: "img/babolat-pure-drive-plus-gen11.webp" },
+  { id: "babolat-pure-drive-wimbledon-2026", brand: "Babolat", model: "Pure Drive Wimbledon (2026)",
+    // Gen11 frame in the 2026 Wimbledon cosmetic (Babolat 101566). The TW product page (BPDW26) now returns 404, so
+    // swingweight/stiffness come from TW's lab data on BPDW26review, which is the Pure Drive 2025 review.
+    // Identity matched on TW code, head size, beam and pattern; no stock number to compare with Babolat's code.
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 317, swingweightType: "strung", stiffness: 69, beam: "23/26/23", length: 27, pattern: "16x19",
+    colors: ["#f2f2f2", "#1b1b1b"],
+    image: "img/babolat-pure-drive-wimbledon-2026.webp" },
   { id: "babolat-pure-aero-plus-gen9", brand: "Babolat", model: "Pure Aero Plus Gen9",
     headSize: 100, weight: 300, balance: 32.0, swingweight: 330, swingweightType: "strung", stiffness: 65, beam: "23/26/23", length: 27.5, pattern: "16x19",
     colors: ["#f2c400", "#1b1b1b"],

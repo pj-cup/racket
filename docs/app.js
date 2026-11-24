@@ -51,6 +51,16 @@
     const vals = data.map(f.num).filter(has);
     ranges[f.key] = [Math.min(...vals), Math.max(...vals)];
   });
+  const field = key => FIELDS.find(f => f.key === key);
+
+  // Min/max filters ("More filters"). Balance filters on the whole pts HL shown on the cards.
+  const RANGE_FIELDS = [
+    { key: "weight", label: "Weight", unit: "g" },
+    { key: "swingweight", label: "Swing weight", unit: "" },
+    { key: "stiffness", label: "Stiffness", unit: "RA" },
+    { key: "balance", label: "Balance", unit: "pts HL", round: true },
+  ].map(rf => ({ ...rf, f: field(rf.key) }));
+  const rangeNum = (rf, r) => { const v = rf.f.num(r); return !has(v) ? null : rf.round ? Math.round(v) : v; };
 
   let selected = [];
 
@@ -218,11 +228,33 @@
     $("brand").insertAdjacentHTML("beforeend", `<option>${esc(b)}</option>`);
   });
 
+  $("rangeInputs").innerHTML = RANGE_FIELDS.map(rf => {
+    const [lo, hi] = ranges[rf.key];
+    const ph = v => rf.round ? Math.round(v) : v;
+    const name = rf.label + (rf.unit ? ` (${rf.unit})` : "");
+    return `<div class="range-field"><span class="range-label">${icon(rf.f.icon)}${esc(name)}</span>
+      <input id="min-${rf.key}" type="number" inputmode="decimal" step="1" placeholder="${ph(lo)}" aria-label="${esc(name)} minimum">
+      <span class="muted" aria-hidden="true">–</span>
+      <input id="max-${rf.key}" type="number" inputmode="decimal" step="1" placeholder="${ph(hi)}" aria-label="${esc(name)} maximum"></div>`;
+  }).join("");
+
+  // Active min/max filters: [{ rf, lo, hi }], with open ends as ±Infinity.
+  function activeRanges() {
+    return RANGE_FIELDS.map(rf => {
+      const lo = $("min-" + rf.key).value.trim(), hi = $("max-" + rf.key).value.trim();
+      if (lo === "" && hi === "") return null;
+      return { rf, lo: lo === "" ? -Infinity : +lo, hi: hi === "" ? Infinity : +hi };
+    }).filter(Boolean);
+  }
+
+  let hiddenNoSpec = 0; // rackets dropped by a min/max filter only because the brand doesn't publish that spec
   function filtered() {
     const words = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const brand = $("brand").value;
     const head = $("head").value;
     const sort = $("sort").value;
+    const active = activeRanges();
+    hiddenNoSpec = 0;
     let list = data.filter(r => {
       if (brand && r.brand !== brand) return false;
       const text = `${r.brand} ${r.model}`.toLowerCase();
@@ -231,6 +263,9 @@
         const [lo, hi] = head.split("-").map(Number);
         if (r.headSize < lo || r.headSize > hi) return false;
       }
+      const vals = active.map(a => rangeNum(a.rf, r));
+      if (active.some((a, i) => has(vals[i]) && (vals[i] < a.lo || vals[i] > a.hi))) return false;
+      if (vals.some(v => !has(v))) { hiddenNoSpec++; return false; }
       return true;
     });
     const cmp = sort === "brand" ? (a, b) => (a.brand + a.model).localeCompare(b.brand + b.model)
@@ -251,12 +286,17 @@
   }
 
   // Browse view: "grid" (thumbnails) or "list" (one row per racket). Remembered per browser.
+  const VIEWS = ["grid", "list"];
   let view = "grid";
-  try { if (localStorage.getItem("view") === "list") view = "list"; } catch {}
+  try { const v = localStorage.getItem("view"); if (VIEWS.includes(v)) view = v; } catch {}
 
   function renderGrid() {
     const list = filtered();
-    $("count").textContent = `${list.length} of ${data.length} rackets · Click a photo to compare`;
+    $("count").textContent = `${list.length} of ${data.length} rackets` +
+      (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + " · Click a photo to compare";
+    const nRanges = activeRanges().length;
+    $("moreCount").textContent = nRanges ? ` (${nRanges})` : "";
+    writeBrowseHash();
     const full = selected.length >= MAX;
     $("grid").className = view;
     document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
@@ -368,7 +408,45 @@
     $("table").innerHTML = head + `<tbody>${body || `<tr><td colspan="${rs.length + 1}" class="muted">No differences.</td></tr>`}</tbody>`;
   }
 
-  // ---------- Routing (#compare=id1,id2 is shareable) ----------
+  // ---------- Routing ----------
+  // #compare=id1,id2 shows the compare table. Any other hash is the browse view's state
+  // (#q=…&brand=…&sort=…&weight=290~310…), kept up to date as you filter, so a browse link is shareable too.
+  let browseHash = ""; // last browse state, so leaving compare returns to it
+
+  function readBrowseHash() {
+    const p = new URLSearchParams(location.hash.slice(1));
+    const setSelect = (id, v) => { $(id).value = v; if ($(id).selectedIndex < 0) $(id).selectedIndex = 0; };
+    $("q").value = p.get("q") || "";
+    setSelect("brand", p.get("brand") || "");
+    setSelect("head", p.get("head") || "");
+    setSelect("sort", p.get("sort") || "brand");
+    sortDir = p.get("dir") === "desc" ? -1 : 1;
+    const v = p.get("view");
+    if (VIEWS.includes(v)) view = v;
+    RANGE_FIELDS.forEach(rf => {
+      const [lo = "", hi = ""] = (p.get(rf.key) || "").split("~");
+      $("min-" + rf.key).value = lo !== "" && isFinite(lo) ? lo : "";
+      $("max-" + rf.key).value = hi !== "" && isFinite(hi) ? hi : "";
+    });
+    if (activeRanges().length) $("more").open = true;
+  }
+
+  function writeBrowseHash() {
+    const p = new URLSearchParams();
+    const q = $("q").value.trim();
+    if (q) p.set("q", q);
+    if ($("brand").value) p.set("brand", $("brand").value);
+    if ($("head").value) p.set("head", $("head").value);
+    if ($("sort").value !== "brand") p.set("sort", $("sort").value);
+    if (sortDir < 0) p.set("dir", "desc");
+    if (view !== "grid") p.set("view", view);
+    activeRanges().forEach(({ rf }) => p.set(rf.key, $("min-" + rf.key).value.trim() + "~" + $("max-" + rf.key).value.trim()));
+    browseHash = p.toString() ? "#" + p : "";
+    if (location.hash !== browseHash) history.replaceState(null, "", browseHash || location.pathname + location.search);
+  }
+
+  const goBrowse = () => { location.hash = browseHash; };
+
   function readHash() {
     const m = location.hash.match(/^#compare=(.*)$/);
     if (m) selected = [...new Set(m[1].split(",").map(decodeURIComponent))].filter(id => byId.has(id)).slice(0, MAX);
@@ -376,7 +454,7 @@
     if (showCompare) { // rewrite the URL to what's actually shown (deduped, unknown ids dropped, max 4)
       const canon = "#compare=" + selected.map(encodeURIComponent).join(",");
       if (location.hash !== canon) history.replaceState(null, "", canon);
-    }
+    } else if (!m) readBrowseHash();
     $("compare").hidden = !showCompare;
     $("browse").hidden = showCompare;
     render();
@@ -384,7 +462,7 @@
 
   function sync() {
     if (!$("compare").hidden) {
-      if (selected.length < 2) { location.hash = ""; return; }
+      if (selected.length < 2) { goBrowse(); return; }
       history.replaceState(null, "", "#compare=" + selected.map(encodeURIComponent).join(","));
     }
     render();
@@ -397,6 +475,11 @@
 
   // ---------- Events ----------
   ["q", "brand", "head"].forEach(id => $(id).addEventListener("input", renderGrid));
+  $("rangeInputs").addEventListener("input", renderGrid);
+  $("resetRanges").addEventListener("click", () => {
+    $("rangeInputs").querySelectorAll("input").forEach(i => { i.value = ""; });
+    renderGrid();
+  });
   $("sort").addEventListener("input", () => { sortDir = 1; renderGrid(); });
   document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.addEventListener("click", () => {
     view = b.dataset.view;
@@ -432,8 +515,7 @@
     window.scrollTo(0, 0);
   });
   $("clear").addEventListener("click", () => { selected = []; sync(); });
-  $("copyLink").addEventListener("click", async () => {
-    const b = $("copyLink");
+  async function copyHref(b) {
     try {
       await navigator.clipboard.writeText(location.href);
       b.textContent = "Copied ✓";
@@ -441,8 +523,10 @@
     } catch {
       prompt("Copy this link", location.href); // no clipboard access (e.g. file://)
     }
-  });
-  $("back").addEventListener("click", () => { location.hash = ""; });
+  }
+  $("copyLink").addEventListener("click", () => copyHref($("copyLink")));
+  $("copyBrowse").addEventListener("click", () => copyHref($("copyBrowse")));
+  $("back").addEventListener("click", goBrowse);
   $("diffOnly").addEventListener("change", renderTable);
   // "Compact" hides photos, hints and extras so the table fits on one screen. Remembered per browser.
   const setDataOnly = on => { $("dataOnly").checked = on; $("compare").classList.toggle("data-only", on); };

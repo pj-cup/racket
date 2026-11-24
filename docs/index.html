@@ -41,7 +41,15 @@
           <button type="button" data-view="grid" aria-pressed="true" aria-label="Thumbnail view" title="Thumbnails"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5" rx="1"/><rect x="9.5" y="1.5" width="5" height="5" rx="1"/><rect x="1.5" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg></button>
           <button type="button" data-view="list" aria-pressed="false" aria-label="List view" title="List"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3h13M1.5 8h13M1.5 13h13"/></svg></button>
         </div>
+        <button id="copyBrowse" class="btn ghost" type="button" title="Copy a link to this view, with its filters">Copy link</button>
       </div>
+      <details id="more" class="more-filters">
+        <summary>More filters<span id="moreCount" class="more-count"></span></summary>
+        <div class="range-body">
+          <div id="rangeInputs" class="range-inputs"></div>
+          <button id="resetRanges" class="btn ghost" type="button">Reset</button>
+        </div>
+      </details>
       <p id="count" class="muted"></p>
       <div id="grid" class="grid"></div>
     </section>

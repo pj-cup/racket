@@ -638,67 +638,21 @@
 
     $("table").dataset.cols = rs.length;
     $("table").innerHTML = head + `<tbody>${body || `<tr><td colspan="${rs.length + 1}" class="muted">No differences.</td></tr>`}</tbody>`;
-    renderStrips(rs);
+    renderTrends(rs);
   }
 
-  // ---------- Charts under the compare table ----------
-  // Rackets from different lines: "where they sit", one strip per spec with every racket as a faint dot and the
-  // compared rackets as lettered dots. Generations of one line: how each spec changed, one small chart per spec.
-  const STRIP_KEYS = ["weight", "balance", "swingweight", "stiffness", "headSize"];
+  // ---------- Generation charts above the compare table ----------
+  // Comparing generations of one line: how each spec changed, one small chart per spec. Otherwise nothing.
   const TREND_KEYS = ["weight", "balance", "swingweight", "stiffness"];
   const valTxt = (f, v) => f.scale ? f.scale(v) : `${+v.toFixed(1)}${f.unit || ""}`;
   const shortTxt = (f, v) => f.key === "balance" ? String(Math.round(v)) : String(+v.toFixed(1)); // unit is in the title
   const unitTitle = f => f.key === "balance" ? "Balance (pts HL)" : f.label + (f.unit ? ` (${f.unit.trim()})` : "");
   const nameOf = r => `${r.brand} ${r.model}`;
 
-  function renderStrips(rs) {
+  function renderTrends(rs) {
     const a = rs[0], g = lineOf(a), sameLine = g && rs.every(r => r.line === a.line);
-    const W = Math.max(280, $("strips").clientWidth || $("compare").clientWidth);
-    $("strips").innerHTML = sameLine ? trendCharts(a, g, rs, W) : stripRows(rs, W);
-  }
-
-  function stripRows(rs, W) {
-    const labelW = W < 560 ? 0 : 130, w = W - labelW;
-    const m = { l: 14, r: 14 };
-    const rows = STRIP_KEYS.map(k => {
-      const f = field(k), [lo, hi] = ranges[k];
-      const picked = rs.map((r, i) => ({ r, i, v: f.num(r) })).filter(p => has(p.v));
-      if (picked.length < 2 || !(hi > lo)) return "";
-      if (f.group && new Set(picked.map(p => f.group(p.r))).size > 1) return "";
-      const x = v => m.l + ((v - lo) / (hi - lo)) * (w - m.l - m.r);
-      // Every racket, stacked where dots would overlap (one column per 6 px), like a dot histogram.
-      const cols = new Map();
-      data.filter(r => has(f.num(r))).forEach(r => {
-        const c = Math.round(x(f.num(r)) / 6);
-        if (!cols.has(c)) cols.set(c, []);
-        cols.get(c).push(r);
-      });
-      const tallest = Math.max(...[...cols.values()].map(c => c.length));
-      const step = Math.min(6, 54 / tallest), top = 6, base = top + Math.ceil(step * (tallest - 1)) + 4;
-      const field_ = [...cols.entries()].map(([c, list]) => list.map((r, j) =>
-        `<circle class="bg" cx="${c * 6}" cy="${base - j * step}" r="2.6"><title>${esc(`${nameOf(r)}: ${f.fmt(r)}`)}</title></circle>`).join("")).join("");
-      // Compared rackets on lanes under the axis; one too close to the previous drops to the next lane.
-      const lanes = [];
-      const marks = [...picked].sort((p, q) => p.v - q.v).map(p => {
-        const px = x(p.v);
-        let lane = lanes.findIndex(end => px - end >= 18);
-        if (lane < 0) { lane = lanes.length; lanes.push(-Infinity); }
-        lanes[lane] = px;
-        const cy = base + 16 + lane * 18;
-        return `<g class="pick-mark">${lane ? "" : `<line x1="${px}" x2="${px}" y1="${base}" y2="${cy - 7}"/>`}<circle cx="${px}" cy="${cy}" r="8"/>
-          <text x="${px}" y="${cy + 3.5}" text-anchor="middle">${LETTERS[p.i]}</text><title>${esc(`${LETTERS[p.i]} · ${nameOf(p.r)}: ${f.fmt(p.r)}`)}</title></g>`;
-      }).join("");
-      const yEnd = base + 16 + (lanes.length - 1) * 18 + 22, H = yEnd + 4;
-      const ends = `<text class="tick" x="${m.l}" y="${yEnd}">${esc(valTxt(f, lo))}</text>`
-        + `<text class="tick" x="${w - m.r}" y="${yEnd}" text-anchor="end">${esc(valTxt(f, hi))}</text>`;
-      const summary = `${f.label}: ` + picked.map(p => `${LETTERS[p.i]} ${f.fmt(p.r)}`).join(", ")
-        + `. All rackets range from ${valTxt(f, lo)} to ${valTxt(f, hi)}.`;
-      return `<div class="strip"><div class="strip-label">${icon(f.icon)}${esc(f.label)}</div>
-        <svg width="${w}" height="${H}" viewBox="0 0 ${w} ${H}" role="img" aria-label="${esc(summary)}">
-        <line class="axis" x1="${m.l}" x2="${w - m.r}" y1="${base + 4}" y2="${base + 4}"/>${field_}${marks}${ends}</svg></div>`;
-    }).join("");
-    if (!rows) return "";
-    return `<div class="charts-head"><h3>Where they sit</h3><span class="muted">Each faint dot is one of the ${data.length} rackets on the site; lettered dots are the ones you're comparing.</span></div>${rows}`;
+    const W = Math.max(280, $("trends").clientWidth || $("compare").clientWidth);
+    $("trends").innerHTML = sameLine ? trendCharts(a, g, rs, W) : "";
   }
 
   function trendCharts(a, g, rs, W) {
@@ -707,7 +661,9 @@
     const m = { l: 10, r: 10, t: 22, b: 30 };
     const sx = i => m.l + ((i + 0.5) / n) * (cw - m.l - m.r);
     const charts = TREND_KEYS.map(k => {
-      const f = field(k), pts = g.map((r, i) => ({ r, i, v: f.num(r) })), known = pts.filter(p => has(p.v));
+      const f = field(k), numOf = r => { const v = f.num(r); return has(v) && k === "balance" ? Math.round(v) : v; };
+      // Balance is plotted in whole pts, as labelled and shown in the table, so a 0.1 cm change isn't drawn as a drop.
+      const pts = g.map((r, i) => ({ r, i, v: numOf(r) })), known = pts.filter(p => has(p.v));
       if (!known.length) return "";
       const lo = Math.min(...known.map(p => p.v)), hi = Math.max(...known.map(p => p.v));
       const pad = (hi - lo) * 0.25 || Math.max(1, Math.abs(hi) * 0.02);
@@ -897,7 +853,7 @@
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      if (!$("compare").hidden) renderStrips(selected.map(id => byId.get(id)));
+      if (!$("compare").hidden) renderTrends(selected.map(id => byId.get(id)));
       else if (view === "map") renderGrid();
     }, 150);
   });

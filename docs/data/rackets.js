@@ -61,14 +61,16 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 330, swingweightType: "strung", stiffness: 65, beam: "23/26/23", length: 27.5, pattern: "16x19",
     colors: ["#f2c400", "#1b1b1b"],
     image: "img/babolat-pure-aero-plus-gen9.webp" },
-  { id: "babolat-pure-aero-rafa-origin", brand: "Babolat", model: "Pure Aero Rafa Origin", line: "Pure Aero Rafa", year: 2023,
+  { id: "babolat-pure-aero-rafa-origin", brand: "Babolat", model: "Pure Aero Rafa Origin",
+    // No line: a heavier frame than the Pure Aero (317 g, swingweight 371), not a generation of it.
     // 2023 model, no longer on babolat.com (product code 101509 redirects to the racquet list):
     // head size and unstrung weight/balance from Babolat's launch article, confirmed by Tennis Warehouse Europe's unstrung spec;
     // swingweight/stiffness, beam, length and pattern from the Tennis Warehouse playtest review (BARORreview); no current TW product page
     headSize: 100, weight: 317, balance: 33.0, swingweight: 371, swingweightType: "strung", stiffness: 70, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#e040a0", "#1b1b1b"],
     image: "img/babolat-pure-aero-rafa-origin.jpg" },
-  { id: "babolat-pure-aero-rafa-2019", brand: "Babolat", model: "Pure Aero Rafa (2019)", line: "Pure Aero Rafa", year: 2019,
+  { id: "babolat-pure-aero-rafa-2019", brand: "Babolat", model: "Pure Aero Rafa (2019)", line: "Pure Aero", year: 2019,
+    // line: the Gen7-era Pure Aero in Rafa colours (same specs as the regular frame), so it's grouped with the Pure Aero line.
     // Gen7-era Rafa cosmetic (orange/yellow/purple), no longer on babolat.com: unstrung weight/balance from retailer listings
     // of Babolat's spec (Tradeinn, Tennis-Point); swingweight/stiffness from Tennis Warehouse (BPARR product page + BPARRreview).
     // Identity matched on photo/colourway, head size, beam and pattern (TW stock number is blank, no Babolat code to compare)

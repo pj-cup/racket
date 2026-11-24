@@ -87,7 +87,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .icon { display: inline-block; width: 1.1em; height: 1.1em; margin-right: 0.3em; vertical-align: -0.2em; stroke-width: 2; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-.controls input, .controls select {
+.controls input, .controls select, .range-field input, .map-bar select {
   font: inherit; color: var(--text); background: var(--surface);
   border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px;
 }
@@ -102,11 +102,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .range-inputs { display: flex; flex-wrap: wrap; gap: 10px 16px; }
 .range-field { display: grid; grid-template-columns: 76px auto 76px; align-items: center; gap: 2px 6px; }
 .range-label { grid-column: 1 / -1; font-size: 0.85rem; color: var(--muted); }
-.range-field input {
-  font: inherit; color: var(--text); background: var(--surface); width: 100%;
-  border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 8px; font-variant-numeric: tabular-nums;
-}
-.range-field input:focus-visible, .more-filters summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.range-field input { width: 100%; padding: 6px 8px; font-variant-numeric: tabular-nums; }
 
 .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 .card {
@@ -119,7 +115,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
   height: 180px; display: flex; align-items: center; justify-content: center; overflow: hidden;
 }
 .pic[data-zoom] { cursor: zoom-in; }
-.pic[data-zoom]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pic[data-zoom]:focus-visible, .range-field input:focus-visible, .more-filters summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pic:has(img) { background: #ffffff; padding: 8px; } /* product shots are made for a light background */
 .pic svg, .pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .pic.small { width: 100%; max-width: 160px; height: 84px; margin-bottom: 8px; }
@@ -186,10 +182,7 @@ button.pic:disabled { cursor: not-allowed; opacity: 0.55; }
 /* Spec map: one dot per racket on two chosen specs. */
 .map-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 8px; color: var(--muted); font-size: 0.85rem; }
 .map-bar label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; letter-spacing: 0.05em; }
-.map-bar select {
-  font: inherit; font-weight: 400; letter-spacing: 0; color: var(--text); background: var(--surface);
-  border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 8px;
-}
+.map-bar select { font-weight: 400; letter-spacing: 0; padding: 6px 8px; }
 .map-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-left: auto; }
 .map-legend .key { display: inline-flex; align-items: center; gap: 6px; }
 .map-legend svg { width: 14px; height: 14px; overflow: visible; }
@@ -213,7 +206,6 @@ button.pic:disabled { cursor: not-allowed; opacity: 0.55; }
   background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 0.82rem;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18); font-variant-numeric: tabular-nums;
 }
-.map-tip .brand { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .map-note { margin: 8px 0 0; font-size: 0.85rem; }
 @media (max-width: 640px) { .map-legend { margin-left: 0; } }
 
@@ -241,7 +233,7 @@ button.pic:disabled { cursor: not-allowed; opacity: 0.55; }
 .row .zoom-btn { top: 3px; right: 3px; width: 22px; height: 22px; }
 .row .zoom-btn svg { width: 13px; height: 13px; }
 .row .similar-btn { top: auto; bottom: 3px; }
-.row .brand { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.row .brand, .map-tip .brand { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .row h3 { margin: 0; font-size: 1rem; }
 .row .spec { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.92rem; }
 .row.selected { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--ball); }

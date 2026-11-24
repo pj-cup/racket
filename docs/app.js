@@ -23,7 +23,7 @@
       hint: "Bigger = more forgiving, less precise", extremes: ["Biggest", "Smallest"], delta: (r, a) => signed(r.headSize - a.headSize, " sq in") },
     { key: "weight", icon: "dumbbell", label: "Weight",     unit: " g", num: r => r.weight,
       hint: "Unstrung. Heavier = more stable, more effort", extremes: ["Heaviest", "Lightest"], delta: (r, a) => signed(r.weight - a.weight, " g") },
-    { key: "balance", icon: "scale", label: "Balance",    fmt: fmtBalance, num: r => balancePts(r), scale: v => ptsLabel(Math.round(v)),
+    { key: "balance", icon: "scale", label: "Balance",    fmt: fmtBalance, num: r => has(r.balance) ? balancePts(r) : null, scale: v => ptsLabel(Math.round(v)),
       sub: r => has(r.balance) ? `${r.balance.toFixed(1)} cm` : "",
       hint: "Unstrung. More pts HL = quicker hands, less plow", extremes: ["Most HL", "Least HL"],
       delta: (r, a) => { const d = Math.round(balancePts(r)) - Math.round(balancePts(a)); return d === 0 ? "" : `${pts(Math.abs(d))} ${d > 0 ? "more" : "less"} HL`; } },
@@ -55,11 +55,9 @@
 
   // Min/max filters ("More filters"). Balance filters on the whole pts HL shown on the cards.
   const RANGE_FIELDS = [
-    { key: "weight", label: "Weight", unit: "g" },
-    { key: "swingweight", label: "Swing weight", unit: "" },
-    { key: "stiffness", label: "Stiffness", unit: "RA" },
-    { key: "balance", label: "Balance", unit: "pts HL", round: true },
-  ].map(rf => ({ ...rf, f: field(rf.key) }));
+    { key: "weight" }, { key: "swingweight" }, { key: "stiffness" }, { key: "balance", unit: "pts HL", round: true },
+  ].map(rf => { const f = field(rf.key); return { ...rf, f, unit: rf.unit ?? (f.unit || "").trim() }; });
+  const rangeVal = (rf, v) => !has(v) ? null : rf.round ? Math.round(v) : v;
   // "Find similar": distance between two rackets over these specs, each scaled by its spread across all rackets
   // (z-scores), as a root mean square over the specs both rackets publish. Fewer than 3 shared specs: not ranked.
   const SIM_KEYS = ["headSize", "weight", "balance", "swingweight", "stiffness"];
@@ -78,22 +76,14 @@
     return n >= 3 ? Math.sqrt(sum / n) : Infinity;
   }
   // Short "how it differs" line vs the reference racket, e.g. "+5 g · 1 pt more HL · +8 SW".
-  function simDiff(r, ref) {
-    const parts = [];
-    const d = (a, b) => has(a) && has(b) ? a - b : 0;
-    const dh = d(r.headSize, ref.headSize); if (dh) parts.push(signed(dh, " sq in"));
-    const dw = d(r.weight, ref.weight); if (dw) parts.push(signed(dw, " g"));
-    if (has(r.balance) && has(ref.balance)) {
-      const db = Math.round(balancePts(r)) - Math.round(balancePts(ref));
-      if (db) parts.push(`${pts(Math.abs(db))} ${db > 0 ? "more" : "less"} HL`);
-    }
-    const ds = d(r.swingweight, ref.swingweight); if (ds) parts.push(signed(ds, " SW"));
-    const dr = d(r.stiffness, ref.stiffness); if (dr) parts.push(signed(dr, " RA"));
-    return parts.join(" · ") || "Same specs";
-  }
-  let similarId = null; // reference racket while the browse list is sorted by similarity
+  const simDiff = (r, ref) => simStats.map(({ f }) => {
+    const a = f.num(r), b = f.num(ref);
+    if (!has(a) || !has(b) || a === b) return "";
+    const d = f.delta(r, ref); // "" when balance differs in cm but not in whole pts
+    return d && f.key === "swingweight" ? d + " SW" : d;
+  }).filter(Boolean).join(" · ") || "Same specs";
+  let similarId = null; // set: the browse list is sorted by closeness to this racket
 
-  const rangeNum = (rf, r) => { const v = rf.f.num(r); return !has(v) ? null : rf.round ? Math.round(v) : v; };
 
   let selected = [];
 
@@ -170,7 +160,7 @@
     const r = byId.get(id);
     if (!r) return;
     const keySpecs = ["headSize", "weight", "balance", "pattern"]
-      .map(k => { const f = FIELDS.find(f => f.key === k); return `${icon(f.icon)}${esc(f.fmt(r))}`; }).join(" · ");
+      .map(k => { const f = field(k); return `${icon(f.icon)}${esc(f.fmt(r))}`; }).join(" · ");
     $("zoomPic").className = "zoom-pic" + (r.image ? " photo" : "");
     $("zoomPic").innerHTML = r.image
       ? `<img src="${esc(r.image)}" alt="${esc(r.brand + " " + r.model)}" data-id="${esc(r.id)}" referrerpolicy="no-referrer">`
@@ -267,33 +257,32 @@
 
   $("rangeInputs").innerHTML = RANGE_FIELDS.map(rf => {
     const [lo, hi] = ranges[rf.key];
-    const ph = v => rf.round ? Math.round(v) : v;
-    const name = rf.label + (rf.unit ? ` (${rf.unit})` : "");
+    const name = rf.f.label + (rf.unit ? ` (${rf.unit})` : "");
     return `<div class="range-field"><span class="range-label">${icon(rf.f.icon)}${esc(name)}</span>
-      <input id="min-${rf.key}" type="number" inputmode="decimal" step="1" placeholder="${ph(lo)}" aria-label="${esc(name)} minimum">
+      <input id="min-${rf.key}" type="number" inputmode="decimal" step="1" placeholder="${rangeVal(rf, lo)}" aria-label="${esc(name)} minimum">
       <span class="muted" aria-hidden="true">–</span>
-      <input id="max-${rf.key}" type="number" inputmode="decimal" step="1" placeholder="${ph(hi)}" aria-label="${esc(name)} maximum"></div>`;
+      <input id="max-${rf.key}" type="number" inputmode="decimal" step="1" placeholder="${rangeVal(rf, hi)}" aria-label="${esc(name)} maximum"></div>`;
   }).join("");
 
-  // Active min/max filters: [{ rf, lo, hi }], with open ends as ±Infinity.
+  // Active min/max filters: [{ rf, min, max, lo, hi }]: min/max as typed, lo/hi as numbers with open ends at ±Infinity.
   function activeRanges() {
     return RANGE_FIELDS.map(rf => {
-      const lo = $("min-" + rf.key).value.trim(), hi = $("max-" + rf.key).value.trim();
-      if (lo === "" && hi === "") return null;
-      return { rf, lo: lo === "" ? -Infinity : +lo, hi: hi === "" ? Infinity : +hi };
+      const min = $("min-" + rf.key).value.trim(), max = $("max-" + rf.key).value.trim();
+      if (min === "" && max === "") return null;
+      return { rf, min, max, lo: min === "" ? -Infinity : +min, hi: max === "" ? Infinity : +max };
     }).filter(Boolean);
   }
 
-  let refAdded = false; // similar mode: the reference is shown although the filters exclude it
-  let hiddenNoSpec = 0; // rackets dropped by a min/max filter only because the brand doesn't publish that spec
-  function filtered() {
+  // The browse list for the current controls: { list, ref, hiddenNoSpec }.
+  // ref: the similar-mode reference, kept out of `list` (shown first whatever the filters say).
+  // hiddenNoSpec: rackets dropped by a min/max filter only because the brand doesn't publish that spec.
+  function filtered(active) {
     const words = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const brand = $("brand").value;
     const head = $("head").value;
     const sort = $("sort").value;
-    const active = activeRanges();
-    hiddenNoSpec = 0;
-    refAdded = false;
+    const ref = similarId ? byId.get(similarId) : null;
+    let hiddenNoSpec = 0;
     let list = data.filter(r => {
       if (brand && r.brand !== brand) return false;
       const text = `${r.brand} ${r.model}`.toLowerCase();
@@ -302,18 +291,15 @@
         const [lo, hi] = head.split("-").map(Number);
         if (r.headSize < lo || r.headSize > hi) return false;
       }
-      const vals = active.map(a => rangeNum(a.rf, r));
+      const vals = active.map(a => rangeVal(a.rf, a.rf.f.num(r)));
       if (active.some((a, i) => has(vals[i]) && (vals[i] < a.lo || vals[i] > a.hi))) return false;
       if (vals.some(v => !has(v))) { hiddenNoSpec++; return false; }
       return true;
     });
-    if (sort === "similar") {
-      const ref = byId.get(similarId);
+    if (ref) {
       const dist = new Map(list.map(r => [r.id, distance(r, ref)]));
-      refAdded = !list.includes(ref);
       list = list.filter(r => r !== ref).sort((a, b) => dist.get(a.id) - dist.get(b.id));
-      list.unshift(ref); // the reference always shows, first, even when the filters would hide it
-      return list;
+      return { list, ref, hiddenNoSpec };
     }
     const cmp = sort === "brand" ? (a, b) => (a.brand + a.model).localeCompare(b.brand + b.model)
       : sort === "pattern" ? (a, b) => a.pattern.localeCompare(b.pattern, undefined, { numeric: true })
@@ -321,7 +307,7 @@
       : (a, b) => a[sort] - b[sort];
     const key = sort === "brand" ? "model" : sort;
     list.sort((a, b) => !has(a[key]) ? (has(b[key]) ? 1 : 0) : !has(b[key]) ? -1 : sortDir * cmp(a, b)); // unpublished values last
-    return list;
+    return { list, ref, hiddenNoSpec };
   }
 
   // Sort direction: 1 ascending, -1 descending. List view's column headers toggle it; the Sort menu resets it.
@@ -338,41 +324,41 @@
   try { const v = localStorage.getItem("view"); if (VIEWS.includes(v)) view = v; } catch {}
 
   // Under each name in similar mode: "Reference", or how the racket differs from it.
-  let simRef = null;
-  const simNote = r => !simRef ? "" : r === simRef ? `<div class="sim ref">Reference</div>`
-    : `<div class="sim">${esc(simDiff(r, simRef))}</div>`;
+  const simNote = (r, ref) => !ref ? "" : r === ref ? `<div class="sim ref">Reference</div>`
+    : `<div class="sim">${esc(simDiff(r, ref))}</div>`;
+  const NONE = `<p class="muted">No rackets match.</p>`;
 
   function renderGrid() {
-    const list = filtered();
-    $("count").textContent = `${list.length - refAdded} of ${data.length} rackets` + (refAdded ? " + reference" : "") +
+    const active = activeRanges();
+    const { list: found, ref, hiddenNoSpec } = filtered(active);
+    const list = ref ? [ref, ...found] : found;
+    $("count").textContent = `${found.length} of ${data.length} rackets` + (ref ? " + reference" : "") +
       (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + (view === "map" ? " · Click a dot to compare" : " · Click a photo to compare");
-    const nRanges = activeRanges().length;
-    $("moreCount").textContent = nRanges ? ` (${nRanges})` : "";
-    writeBrowseHash();
-    const ref = $("sort").value === "similar" ? byId.get(similarId) : null;
+    $("moreCount").textContent = active.length ? ` (${active.length})` : "";
+    if (ref) $("sort").value = "similar"; // the hidden option, so the menu reads "Most similar"
     $("similarBanner").hidden = !ref;
     if (ref) $("similarName").textContent = `${ref.brand} ${ref.model}`;
-    simRef = ref;
+    writeBrowseHash(active);
     const full = selected.length >= MAX;
     $("grid").className = view;
     document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
-    if (view === "list") return renderList(list, full);
-    if (view === "map") return renderMap(list, full);
+    if (view === "list") return renderList(list, full, ref);
+    if (view === "map") return renderMap(list, full, ref);
     $("grid").innerHTML = list.map(r => {
       const on = selected.includes(r.id);
       const rows = FIELDS.filter(f => CARD_FIELDS.includes(f.key))
         .map(f => `<dt>${icon(f.icon)}${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
       return `<article class="card${on ? " selected" : ""}">
         ${browsePic(r, "", on, full)}
-        <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${simNote(r)}</div>
+        <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${simNote(r, ref)}</div>
         <dl class="specs">${rows}</dl>
       </article>`;
-    }).join("") || `<p class="muted">No rackets match.</p>`;
+    }).join("") || NONE;
   }
 
-  function renderList(list, full) {
+  function renderList(list, full, ref) {
     const fields = FIELDS.filter(f => CARD_FIELDS.includes(f.key));
-    if (!list.length) { $("grid").innerHTML = `<p class="muted">No rackets match.</p>`; return; }
+    if (!list.length) { $("grid").innerHTML = NONE; return; }
     const sort = $("sort").value;
     const th = (key, text) => {
       const on = sort === key, arrow = on ? (sortDir > 0 ? "▲" : "▼") : "";
@@ -386,7 +372,7 @@
       const specs = fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(r))}</div>`).join("");
       return `<article class="row${on ? " selected" : ""}">
         ${browsePic(r, "small", on, full)}
-        <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${simNote(r)}</div>
+        <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${simNote(r, ref)}</div>
         <div class="row-specs">${specs}</div>
       </article>`;
     }).join("");
@@ -407,9 +393,9 @@
     return ticks;
   }
   const axisSelect = (axis, cur) => `<label>${axis.toUpperCase()} <select data-axis="${axis}" aria-label="${axis === "x" ? "Horizontal" : "Vertical"} axis">${
-    Object.entries(MAP_AXES).map(([k]) => `<option value="${k}"${k === cur ? " selected" : ""}>${esc(field(k).label)}</option>`).join("")}</select></label>`;
+    Object.keys(MAP_AXES).map(k => `<option value="${k}"${k === cur ? " selected" : ""}>${esc(field(k).label)}</option>`).join("")}</select></label>`;
 
-  function renderMap(list, full) {
+  function renderMap(list, full, ref) {
     const fx = field(mapX), fy = field(mapY);
     const shown = list.filter(r => has(fx.num(r)) && has(fy.num(r)));
     const W = Math.max(300, $("grid").clientWidth), H = Math.round(Math.min(560, Math.max(320, W * 0.6)));
@@ -438,7 +424,6 @@
       pos.set(r.id, [sx(fx.num(r)) + rad * Math.cos(a), sy(fy.num(r)) + rad * Math.sin(a)]);
     }));
 
-    const ref = simRef;
     const rank = r => selected.includes(r.id) || r === ref ? 1 : 0;
     const dots = [...shown].sort((a, b) => rank(a) - rank(b)).map(r => {
       const [x, y] = pos.get(r.id), i = selected.indexOf(r.id), on = i >= 0;
@@ -463,12 +448,14 @@
       <div class="map-plot"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(`${fy.label} against ${fx.label}`)}">
         <g aria-hidden="true">${g}</g>${dots}</svg><div id="mapTip" class="map-tip" role="tooltip" hidden></div></div>
       ${missing ? `<p class="muted map-note">${missing} racket${missing > 1 ? "s" : ""} not shown: ${esc(fx.label.toLowerCase())} or ${esc(fy.label.toLowerCase())} not published.</p>` : ""}
-      ${list.length ? "" : `<p class="muted">No rackets match.</p>`}`;
+      ${list.length ? "" : NONE}`;
   }
 
+  let tipDot = null; // the dot the tooltip is showing, so moving within one dot doesn't rebuild it
   function showTip(g) {
     const tip = $("mapTip"), r = byId.get(g?.dataset.dot);
-    if (!tip) return;
+    if (!tip || (g && g === tipDot)) return;
+    tipDot = g;
     if (!r) { tip.hidden = true; return; }
     const fx = field(mapX), fy = field(mapY), on = selected.includes(r.id);
     tip.innerHTML = `<span class="brand">${esc(r.brand)}</span><strong>${esc(r.model)}</strong>
@@ -547,7 +534,7 @@
     };
 
     const body = TABLE_GROUPS.map(g => {
-      const rows = g.keys.map(k => row(FIELDS.find(f => f.key === k))).join("");
+      const rows = g.keys.map(k => row(field(k))).join("");
       return rows ? `<tr class="group"><th colspan="${rs.length + 1}" scope="colgroup">${g.name}</th></tr>${rows}` : "";
     }).join("");
 
@@ -562,13 +549,12 @@
 
   function readBrowseHash() {
     const p = new URLSearchParams(location.hash.slice(1));
-    const setSelect = (id, v) => { $(id).value = v; if ($(id).selectedIndex < 0) $(id).selectedIndex = 0; };
+    const setSelect = (id, v) => { $(id).value = v; if ($(id).selectedIndex < 0 || $(id).selectedOptions[0].hidden) $(id).selectedIndex = 0; };
     $("q").value = p.get("q") || "";
     setSelect("brand", p.get("brand") || "");
     setSelect("head", p.get("head") || "");
     setSelect("sort", p.get("sort") || "brand");
     similarId = byId.has(p.get("similar")) ? p.get("similar") : null;
-    if ($("sort").value === "similar" && !similarId) $("sort").value = "brand";
     sortDir = p.get("dir") === "desc" ? -1 : 1;
     const v = p.get("view");
     if (VIEWS.includes(v)) view = v;
@@ -582,19 +568,21 @@
     if (activeRanges().length) $("more").open = true;
   }
 
-  function writeBrowseHash() {
+  function writeBrowseHash(active) {
     const p = new URLSearchParams();
-    const q = $("q").value.trim();
+    const q = $("q").value.trim(), sort = $("sort").value;
     if (q) p.set("q", q);
     if ($("brand").value) p.set("brand", $("brand").value);
     if ($("head").value) p.set("head", $("head").value);
-    if ($("sort").value !== "brand") p.set("sort", $("sort").value);
-    if (sortDir < 0 && $("sort").value !== "similar") p.set("dir", "desc");
-    if ($("sort").value === "similar") p.set("similar", similarId);
+    if (similarId) p.set("similar", similarId);
+    else {
+      if (sort !== "brand") p.set("sort", sort);
+      if (sortDir < 0) p.set("dir", "desc");
+    }
     if (view !== "grid") p.set("view", view);
     if (view === "map" && mapX !== "weight") p.set("x", mapX);
     if (view === "map" && mapY !== "swingweight") p.set("y", mapY);
-    activeRanges().forEach(({ rf }) => p.set(rf.key, $("min-" + rf.key).value.trim() + "~" + $("max-" + rf.key).value.trim()));
+    active.forEach(({ rf, min, max }) => p.set(rf.key, min + "~" + max));
     browseHash = p.toString() ? "#" + p : "";
     if (location.hash !== browseHash) history.replaceState(null, "", browseHash || location.pathname + location.search);
   }
@@ -604,7 +592,7 @@
   // Sort the browse list by closeness to racket `id` (a new history entry, so Back undoes it).
   function showSimilar(id) {
     const p = new URLSearchParams(browseHash.slice(1));
-    p.set("sort", "similar");
+    p.delete("sort");
     p.delete("dir");
     p.set("similar", id);
     if ($("zoom").open) $("zoom").close();
@@ -645,8 +633,8 @@
     $("rangeInputs").querySelectorAll("input").forEach(i => { i.value = ""; });
     renderGrid();
   });
-  $("sort").addEventListener("input", () => { sortDir = 1; renderGrid(); });
-  $("clearSimilar").addEventListener("click", () => { $("sort").value = "brand"; sortDir = 1; renderGrid(); });
+  $("sort").addEventListener("input", () => { sortDir = 1; similarId = null; renderGrid(); });
+  $("clearSimilar").addEventListener("click", () => { similarId = null; $("sort").value = "brand"; sortDir = 1; renderGrid(); });
   document.querySelectorAll(".view-toggle [data-view]").forEach(b => b.addEventListener("click", () => {
     view = b.dataset.view;
     try { localStorage.setItem("view", view); } catch {}
@@ -670,7 +658,7 @@
     const id = g.dataset.dot;
     toggle(id);
     const again = $("grid").querySelector(`[data-dot="${CSS.escape(id)}"]`); // the re-render replaces the dot
-    if (again) { again.focus(); showTip(again); }
+    if (again) { again.focus(); showTip(again); } // focus() usually shows it already; showTip skips a repeat
   };
   $("grid").addEventListener("change", e => {
     const s = e.target.closest("select[data-axis]");
@@ -721,8 +709,7 @@
       prompt("Copy this link", location.href); // no clipboard access (e.g. file://)
     }
   }
-  $("copyLink").addEventListener("click", () => copyHref($("copyLink")));
-  $("copyBrowse").addEventListener("click", () => copyHref($("copyBrowse")));
+  ["copyLink", "copyBrowse"].forEach(id => $(id).addEventListener("click", () => copyHref($(id))));
   $("back").addEventListener("click", goBrowse);
   $("diffOnly").addEventListener("change", renderTable);
   // "Compact" hides photos, hints and extras so the table fits on one screen. Remembered per browser.

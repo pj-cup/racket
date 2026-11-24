@@ -98,6 +98,15 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .more-filters summary { cursor: pointer; color: var(--muted); width: max-content; padding: 2px 0; }
 .more-filters summary:hover, .more-filters[open] summary { color: var(--text); }
 .more-count { color: var(--accent); font-weight: 600; }
+.presets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding-top: 8px; font-size: 0.9rem; }
+.preset {
+  font: inherit; cursor: pointer; border-radius: 999px; padding: 4px 12px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+}
+.preset:hover { border-color: var(--accent); }
+.preset[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.preset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.preset-note { margin: 6px 0 0; font-size: 0.85rem; }
 .range-body { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 24px; padding: 8px 0 4px; }
 .range-inputs { flex: 1 1 600px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 28px; }
 .range-label { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; color: var(--muted); }

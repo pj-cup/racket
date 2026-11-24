@@ -293,6 +293,35 @@
     $("max-" + rf.key).value = has(max) && isFinite(max) ? max : rf.bounds[1];
   };
 
+  // Finder presets: starting points that only set sliders and the sort, so a preset is an ordinary browse link.
+  // ranges: { key: [min, max] } with null for an open end. Search, brand and head size are left as they are.
+  const PRESETS = [
+    { id: "arm", label: "Arm-friendly", ranges: { stiffness: [null, 62] }, sort: "stiffness", dir: 1, order: "softest first" },
+    { id: "quick", label: "Maneuverable", ranges: { swingweight: [null, 315], balance: [6, null] }, sort: "swingweight", dir: 1, order: "lowest swing weight first" },
+    { id: "stable", label: "Stable & solid", ranges: { weight: [310, null], swingweight: [325, null] }, sort: "swingweight", dir: -1, order: "highest swing weight first" },
+    { id: "light", label: "Lightweight", ranges: { weight: [null, 295] }, sort: "weight", dir: 1, order: "lightest first" },
+  ];
+  // "Stiffness ≤ 62 RA, softest first": the exact numbers a preset sets.
+  const presetNote = p => Object.entries(p.ranges).map(([k, [lo, hi]], i) => {
+    const rf = RANGE_FIELDS.find(x => x.key === k), u = rf.unit ? " " + rf.unit : "";
+    return `${i ? rf.f.label.toLowerCase() : rf.f.label} ${has(lo) && has(hi) ? `${lo}–${hi}` : has(lo) ? `≥ ${lo}` : `≤ ${hi}`}${u}`;
+  }).join(" and ") + ", " + p.order;
+  $("presets").innerHTML = `<span class="muted">Start from:</span>` + PRESETS.map(p =>
+    `<button type="button" class="preset" data-preset="${p.id}" aria-pressed="false" title="${esc(presetNote(p))}">${esc(p.label)}</button>`).join("");
+  // The preset the current sliders and sort match exactly, if any (no state of its own).
+  const presetOn = active => PRESETS.find(p => !similarId && $("sort").value === p.sort && sortDir === p.dir &&
+    active.length === Object.keys(p.ranges).length && active.every(({ rf, lo, hi }) => {
+      const want = p.ranges[rf.key];
+      return want && lo === (want[0] ?? -Infinity) && hi === (want[1] ?? Infinity);
+    }));
+  function applyPreset(p) {
+    RANGE_FIELDS.forEach(rf => setRange(rf, ...(p?.ranges[rf.key] || [null, null])));
+    $("sort").value = p ? p.sort : "brand";
+    sortDir = p ? p.dir : 1;
+    similarId = null;
+    renderGrid();
+  }
+
   // Active min/max filters: [{ rf, min, max, lo, hi }]: min/max as hash text ("" = open end), lo/hi as numbers (±Infinity).
   function activeRanges() {
     return RANGE_FIELDS.map(rf => {
@@ -377,6 +406,10 @@
     const nMore = active.length + $("latestOnly").checked;
     $("moreCount").textContent = nMore ? ` (${nMore})` : "";
     RANGE_FIELDS.forEach(paintRange);
+    const preset = presetOn(active);
+    document.querySelectorAll("#presets [data-preset]").forEach(b => b.setAttribute("aria-pressed", b.dataset.preset === preset?.id));
+    $("presetNote").hidden = !preset;
+    if (preset) $("presetNote").textContent = presetNote(preset);
     if (ref) $("sort").value = "similar"; // the hidden option, so the menu reads "Most similar"
     $("similarBanner").hidden = !ref;
     if (ref) $("similarName").textContent = `${ref.brand} ${ref.model}`;
@@ -619,8 +652,8 @@
     if (q) p.set("q", q);
     if ($("brand").value) p.set("brand", $("brand").value);
     if ($("head").value) p.set("head", $("head").value);
-    if (similarId) p.set("similar", similarId);
     if ($("latestOnly").checked) p.set("latest", "1");
+    if (similarId) p.set("similar", similarId);
     else {
       if (sort !== "brand") p.set("sort", sort);
       if (sortDir < 0) p.set("dir", "desc");
@@ -689,6 +722,10 @@
     renderGrid();
   });
   $("latestOnly").addEventListener("change", renderGrid);
+  $("presets").addEventListener("click", e => { // clicking the pressed preset clears it
+    const b = e.target.closest("[data-preset]");
+    if (b) applyPreset(b.getAttribute("aria-pressed") === "true" ? null : PRESETS.find(p => p.id === b.dataset.preset));
+  });
   $("resetRanges").addEventListener("click", () => {
     RANGE_FIELDS.forEach(rf => setRange(rf, null, null));
     $("latestOnly").checked = false;

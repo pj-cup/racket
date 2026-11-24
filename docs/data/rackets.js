@@ -70,6 +70,14 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 324, swingweightType: "strung", stiffness: 67, beam: "23/26/23", length: 27, pattern: "16x19",
     colors: ["#f28c1e", "#1b1b1b"],
     image: "img/babolat-pure-aero-rafa-2019.jpg" },
+  { id: "babolat-pure-aero-2016", brand: "Babolat", model: "Pure Aero (2016)",
+    // 2016 model (TW code BPA), no longer on babolat.com and TW Europe: unstrung weight/balance, beam and pattern from
+    // Racketpedia's listing of Babolat's declared spec; swingweight/stiffness from the Tennis Warehouse playtest review
+    // (BPAreview, same lab data as BPAPLYreview for the Play version); no current TW product page.
+    // Identity matched on photo/colourway, head size, beam and pattern (no stock number or Babolat code to compare)
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 327, swingweightType: "strung", stiffness: 69, beam: "23/26/23", length: 27, pattern: "16x19",
+    colors: ["#f2c400", "#1b1b1b"],
+    image: "img/babolat-pure-aero-2016.jpg" },
 
   // ---- Wilson (wilson.com listings; photos from Tennis Warehouse) ----
   { id: "wilson-pro-staff-97-v14", brand: "Wilson", model: "Pro Staff 97 V14",

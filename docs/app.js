@@ -94,11 +94,12 @@
   const lineOf = r => lines.get(r.line) || null;
   // Latest: no other generation has a later year. A racket without a year is never hidden.
   const isLatest = r => { const g = lineOf(r); return !g || !has(r.year) || g.every(o => !has(o.year) || o.year <= r.year); };
-  // "2 of 4 generations · compare" under the name; compares the line, oldest first (the newest MAX if there are more).
+  // "Gen 2/4" under the name; compares the line, oldest first (the newest MAX if there are more).
   const genNote = r => {
     const g = lineOf(r);
     if (!g) return "";
-    return `<button type="button" class="gen-link" data-generations="${esc(r.id)}">${g.indexOf(r) + 1} of ${g.length} generations · compare</button>`;
+    const what = `Generation ${g.indexOf(r) + 1} of ${g.length}. Compare all generations`;
+    return `<button type="button" class="gen-link" data-generations="${esc(r.id)}" title="${what}" aria-label="${what}">Gen ${g.indexOf(r) + 1}/${g.length}</button>`;
   };
 
 
@@ -421,6 +422,17 @@
     : `<div class="sim">${esc(simDiff(r, ref))}</div>`;
   const NONE = `<p class="muted">No rackets match.</p>`;
 
+  // Spec bar on cards and list rows: where this racket sits between the lowest and highest on the site.
+  // In similar mode a hollow tick marks the reference racket's value on the same bar.
+  const pctOf = (f, v) => { const [lo, hi] = ranges[f.key]; return (100 * (v - lo)) / (hi - lo); };
+  const miniBar = (f, r, ref) => {
+    if (!f.num || !has(f.num(r))) return "";
+    const [lo, hi] = ranges[f.key];
+    if (!(hi > lo)) return "";
+    const refMark = ref && ref !== r && has(f.num(ref)) ? `<b style="left:${pctOf(f, f.num(ref)).toFixed(1)}%"></b>` : "";
+    return `<span class="mini" aria-hidden="true">${refMark}<i style="left:${pctOf(f, f.num(r)).toFixed(1)}%"></i></span>`;
+  };
+
   function renderGrid() {
     const active = activeRanges();
     const { list: found, ref, hiddenNoSpec } = filtered(active);
@@ -447,7 +459,7 @@
     $("grid").innerHTML = list.map(r => {
       const on = selected.includes(r.id);
       const rows = FIELDS.filter(f => CARD_FIELDS.includes(f.key))
-        .map(f => `<dt>${icon(f.icon)}${f.label}</dt><dd>${esc(f.fmt(r))}</dd>`).join("");
+        .map(f => `<dt>${icon(f.icon)}${f.label}</dt><dd><span>${esc(f.fmt(r))}</span>${miniBar(f, r, ref)}</dd>`).join("");
       return `<article class="card${on ? " selected" : ""}">
         ${browsePic(r, "", on, full)}
         <div><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${genNote(r)}${simNote(r, ref)}</div>
@@ -469,7 +481,7 @@
       fields.map(f => th(f.key, f.label)).join("")}</div></div>`;
     $("grid").innerHTML = head + list.map(r => {
       const on = selected.includes(r.id);
-      const specs = fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(r))}</div>`).join("");
+      const specs = fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(r))}${miniBar(f, r, ref)}</div>`).join("");
       return `<article class="row${on ? " selected" : ""}">
         ${browsePic(r, "small", on, full)}
         <div class="name"><div class="brand">${esc(r.brand)}</div><h3>${esc(r.model)}</h3>${genNote(r)}${simNote(r, ref)}</div>
@@ -485,6 +497,7 @@
     stiffness: "Stiffness (RA)", headSize: "Head size (sq in)", length: "Length (in)",
   };
   let mapX = "weight", mapY = "swingweight";
+  const NEAR_N = 5; // spokes to this many closest matches in similar mode
 
   // Color by brand (map and lines views). Only the three biggest brands get a hue; the rest share "Other" gray.
   // Dots overlap freely on a scatter, so every pair of hues must stay apart: three validated hues is the cap.
@@ -565,20 +578,31 @@
       }
     });
 
-    const rank = r => selected.includes(r.id) || r === ref ? 1 : 0;
+    // Find similar: spokes from the reference to its closest matches (the list is already sorted by closeness).
+    // The ranking uses five specs, so a close match that sits far away here differs on these two.
+    const near = ref && pos.has(ref.id) ? list.filter(r => r !== ref).slice(0, NEAR_N) : [];
+    const [rx, ry] = near.length ? pos.get(ref.id) : [0, 0];
+    const spokes = near.map((r, k) => {
+      if (!pos.has(r.id)) return "";
+      const [x, y] = pos.get(r.id);
+      return `<line class="spoke" x1="${rx}" y1="${ry}" x2="${x}" y2="${y}"/>`;
+    }).join("");
+
+    const rank = r => selected.includes(r.id) || r === ref ? 2 : near.includes(r) ? 1 : 0;
     const dots = [...shown].sort((a, b) => rank(a) - rank(b)).map(r => {
-      const [x, y] = pos.get(r.id), i = selected.indexOf(r.id), on = i >= 0;
+      const [x, y] = pos.get(r.id), i = selected.indexOf(r.id), on = i >= 0, k = on ? -1 : near.indexOf(r);
       const name = `${r.brand} ${r.model}`;
-      const cls = "dot" + (on ? " on" : "") + (r === ref ? " ref" : "") + (!on && full ? " full" : "") + brandCls(r);
+      const cls = "dot" + (on ? " on" : "") + (r === ref ? " ref" : "") + (k >= 0 ? " near" : "") + (!on && full ? " full" : "") + brandCls(r);
       let label = "";
       if (on || r === ref) {
         const right = x < W - 170;
         label = `<text class="dot-label" x="${x + (right ? 10 : -10)}" y="${y + 4}" text-anchor="${right ? "start" : "end"}">${on ? LETTERS[i] + " · " : ""}${esc(r.model)}</text>`;
       }
       return `<g class="${cls}" data-dot="${esc(r.id)}" tabindex="0" role="button" aria-pressed="${on}"${!on && full ? ' aria-disabled="true"' : ""}
-        aria-label="${esc(`${name}: ${fx.label} ${fx.fmt(r)}, ${fy.label} ${fy.fmt(r)}. ${on ? "Remove from" : "Add to"} compare`)}">
+        aria-label="${esc(`${name}: ${fx.label} ${fx.fmt(r)}, ${fy.label} ${fy.fmt(r)}.${near.includes(r) ? ` Number ${near.indexOf(r) + 1} closest to the reference.` : ""} ${on ? "Remove from" : "Add to"} compare`)}">
         <circle class="hit" cx="${x}" cy="${y}" r="12"/>${r === ref ? `<circle class="ring" cx="${x}" cy="${y}" r="9"/>` : ""}
-        <circle class="mark" cx="${x}" cy="${y}" r="${on ? 6 : 4.5}"/>${on ? `<text class="dot-letter" x="${x}" y="${y + 3}" text-anchor="middle">${LETTERS[i]}</text>` : ""}${label}</g>`;
+        <circle class="mark" cx="${x}" cy="${y}" r="${on || k >= 0 ? 6.5 : 4.5}"/>${on ? `<text class="dot-letter" x="${x}" y="${y + 3}" text-anchor="middle">${LETTERS[i]}</text>`
+          : k >= 0 ? `<text class="near-num" x="${x}" y="${y + 3}" text-anchor="middle">${k + 1}</text>` : ""}${label}</g>`;
     }).join("");
 
     const missing = list.length - shown.length;
@@ -586,10 +610,11 @@
     const legend = keys + (colorBy === "brand" ? "" : `<span class="key"><svg viewBox="0 0 12 12" aria-hidden="true"><circle class="mark" cx="6" cy="6" r="4"/></svg>Racket</span>`)
       + `<span class="key on"><svg viewBox="0 0 12 12" aria-hidden="true"><circle class="mark" cx="6" cy="6" r="5"/></svg>Picked for compare</span>`
       + (ref ? `<span class="key ref"><svg viewBox="0 0 20 20" aria-hidden="true"><circle class="ring" cx="10" cy="10" r="8"/><circle class="mark" cx="10" cy="10" r="4"/></svg>Reference</span>` : "")
+      + (spokes ? `<span class="key"><svg viewBox="0 0 20 12" aria-hidden="true"><line class="spoke" x1="2" y1="10" x2="18" y2="2"/></svg>${near.length} closest, numbered</span>` : "")
       + (genPaths ? `<span class="key gen"><svg viewBox="0 0 20 12" aria-hidden="true"><path d="M2 6h11"/><polygon points="18 6 11 2 11 10"/></svg>Generations, oldest to newest</span>` : "");
     $("grid").innerHTML = `<div class="map-bar">${axisSelect("x", mapX)}${axisSelect("y", mapY)}${sel}<div class="map-legend">${legend}</div></div>
       <div class="map-plot"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(`${fy.label} against ${fx.label}`)}">
-        <g aria-hidden="true">${g}${genPaths}</g>${dots}</svg><div id="mapTip" class="map-tip" role="tooltip" hidden></div></div>
+        <g aria-hidden="true">${g}${genPaths}${spokes}</g>${dots}</svg><div id="mapTip" class="map-tip" role="tooltip" hidden></div></div>
       ${missing ? `<p class="muted map-note">${missing} racket${missing > 1 ? "s" : ""} not shown: ${esc(fx.label.toLowerCase())} or ${esc(fy.label.toLowerCase())} not published.</p>` : ""}
       ${list.length ? "" : NONE}`;
   }

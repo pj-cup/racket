@@ -521,3 +521,16 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 .profile .pf-line { fill: none; stroke: var(--accent); stroke-opacity: 0.45; stroke-width: 1.5; stroke-linejoin: round; }
 .profile .pick-mark text { font-size: 8.5px; }
 .profile .pf-racket:hover .pf-line { stroke-opacity: 1; stroke-width: 2.5; }
+
+/* Spec bars on cards and list rows: dot = this racket, hollow tick = the similar-mode reference. */
+.specs dd { display: flex; align-items: center; gap: 10px; }
+.mini { position: relative; flex: 1; max-width: 90px; height: 3px; background: var(--line); border-radius: 2px; }
+.mini i, .mini b { position: absolute; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; }
+.mini i { width: 7px; height: 7px; background: var(--accent); }
+.mini b { width: 9px; height: 9px; border: 1.5px solid var(--text); box-sizing: border-box; }
+.row .spec .mini { display: block; max-width: 72px; margin-top: 5px; }
+
+/* Find similar on the map: spokes from the reference to its closest matches. */
+.map .spoke, .map-legend .spoke { stroke: var(--text); stroke-opacity: 0.45; stroke-width: 1.5; stroke-dasharray: 3 3; }
+.map .dot.near .mark { fill: var(--surface); stroke: var(--text); stroke-width: 1.5; }
+.map .near-num { fill: var(--text); font-size: 8.5px; font-weight: 700; pointer-events: none; }

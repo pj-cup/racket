@@ -133,8 +133,15 @@ button.pic:disabled { cursor: not-allowed; opacity: 0.55; }
 .zoom-btn svg { width: 16px; height: 16px; stroke-width: 1.6; }
 /* Compare header: photos are tall two-view shots, so lay them on their side to fill the wide box
    (head left, handle right). */
-.pic.small:has(img) { container-type: size; }
-.pic.small img { flex: none; width: 100cqh; height: 100cqw; transform: rotate(-90deg); }
+.pic.small:has(img) { container-type: size; padding: 3px; }
+/* Small boxes show only the face view (right ~65% of the 0.583-aspect two-view shot): size the img so the
+   face fills the box height (capped so the full length fits), rotate head-left, then shift the face
+   (local +x = up on screen) back to center; clip-path hides the side view when the length cap leaves room. */
+.pic.small img {
+  flex: none; height: auto; object-fit: fill;
+  width: min(100cqh / 0.65, 100cqw * 0.583);
+  transform: rotate(-90deg) translateX(-17.5%); clip-path: inset(0 0 0 35%);
+}
 .card .brand { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .card h3 { margin: 0; font-size: 1.05rem; }
 .specs { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-size: 0.9rem; }
@@ -186,9 +193,9 @@ button.pic:disabled { cursor: not-allowed; opacity: 0.55; }
 /* Phones: no header; specs wrap under the name with their own labels. */
 @media (max-width: 640px) {
   .list-head { display: none; }
-  .row { grid-template-columns: 84px 1fr; gap: 8px 10px; padding: 10px; }
+  .row { grid-template-columns: 104px 1fr; gap: 8px 10px; padding: 10px; }
   .row .pic-wrap { grid-row: span 2; align-self: start; }
-  .row .pic.small { height: 52px; }
+  .row .pic.small { height: 56px; }
   .row .row-specs { grid-column: 2; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 8px; }
   .row .spec { font-size: 0.85rem; }
   .row .spec::before { content: attr(data-label); display: block; font-size: 0.7rem; color: var(--muted); }

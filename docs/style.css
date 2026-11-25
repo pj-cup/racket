@@ -94,7 +94,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .icon { display: inline-block; width: 1.1em; height: 1.1em; margin-right: 0.3em; vertical-align: -0.2em; stroke-width: 2; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-.controls input, .controls select, .map-bar select {
+.controls input, .controls select, .map-bar select, .filter-selects select {
   font: inherit; color: var(--text); background: var(--surface);
   border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px;
 }
@@ -116,6 +116,7 @@ footer { padding-top: 32px; font-size: 0.85rem; }
 .preset-note { margin: 6px 0 0; font-size: 0.85rem; }
 .range-body { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 24px; padding: 8px 0 4px; }
 .range-inputs { flex: 1 1 600px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 28px; }
+.filter-selects { display: flex; flex-wrap: wrap; gap: 8px; flex-basis: 100%; }
 .range-label { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; color: var(--muted); }
 .range-out { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* Two range inputs stacked on one track; only their thumbs take the pointer. --a/--b: handle positions, 0–1. */
@@ -534,3 +535,42 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 .map .spoke, .map-legend .spoke { stroke: var(--text); stroke-opacity: 0.45; stroke-width: 1.5; stroke-dasharray: 3 3; }
 .map .dot.near .mark { fill: var(--surface); stroke: var(--text); stroke-width: 1.5; }
 .map .near-num { fill: var(--text); font-size: 8.5px; font-weight: 700; pointer-events: none; }
+
+/* Compare header: link to the customize page for that racket. */
+.customize-link { display: block; margin-top: 4px; padding: 0; border: 0; background: none; font: inherit; font-size: 0.8rem; font-weight: 500; color: var(--accent); cursor: pointer; }
+.customize-link:hover { text-decoration: underline; }
+
+/* Customize page: weights to add, stock vs customized specs, closest stock rackets. */
+.custom-top { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-start; margin-bottom: 16px; }
+.custom-pic { flex: 0 0 160px; }
+.custom-pic .pic.small { height: 120px; }
+.custom-edit { flex: 1 1 420px; min-width: 0; }
+.custom-intro { margin: 0 0 10px; font-size: 0.9rem; }
+.add-row {
+  display: grid; grid-template-columns: 90px minmax(160px, 1fr) auto auto 28px; gap: 6px 14px; align-items: end;
+  padding: 10px 12px; margin-bottom: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.add-row label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; color: var(--muted); }
+.add-row label > span { display: flex; justify-content: space-between; gap: 8px; }
+.add-row output { color: var(--text); font-variant-numeric: tabular-nums; }
+.add-g input { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 8px; width: 100%; box-sizing: border-box; }
+.add-d input { width: 100%; accent-color: var(--accent); }
+.add-spots { display: flex; flex-wrap: wrap; gap: 4px; }
+.add-spots button {
+  font: inherit; font-size: 0.8rem; cursor: pointer; border-radius: 999px; padding: 3px 10px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+}
+.add-spots button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.add-sw { font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; padding-bottom: 5px; }
+.add-row .remove { border: 0; background: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; padding: 0 4px 3px; }
+.custom-result { max-height: none; margin-bottom: 20px; }
+.custom-table { min-width: 0; }
+.custom-table th .hint { display: block; font-size: 0.75rem; color: var(--muted); font-weight: 400; }
+.custom-table td .mini { display: block; margin-top: 6px; }
+.custom-table td.delta { font-variant-numeric: tabular-nums; }
+.custom-near-head { margin: 0 0 2px; }
+@media (max-width: 640px) {
+  .add-row { grid-template-columns: 80px 1fr 28px; }
+  .add-row .add-spots, .add-row .add-sw { grid-column: 1 / -2; }
+  .add-row .remove { grid-row: 1; grid-column: 3; }
+}

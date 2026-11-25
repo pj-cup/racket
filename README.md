@@ -2,7 +2,7 @@
 Browse tennis racket specs and compare rackets side by side.
 
 ## Features
-- Search, filter by brand and head size, set min/max for weight, swing weight, stiffness and balance, and sort by any spec. Each min/max slider has a histogram of every racket behind it, so you can see where rackets cluster.
+- Search, filter by brand, head size, string pattern and length, set min/max for weight, swing weight, stiffness, balance and beam (its widest point), and sort by any spec. Each min/max slider has a histogram of every racket behind it, so you can see where rackets cluster.
 - Thumbnail, list, spec map or spec lines view. The site remembers your choice.
   - Cards and list rows show a small bar per spec: where the racket sits between the lowest and highest on the site.
   - The map plots every racket on two specs you pick (weight vs swing weight by default). Arrows link each line's generations, oldest to newest.
@@ -12,8 +12,9 @@ Browse tennis racket specs and compare rackets side by side.
 - Generations: rackets with older versions on the site (e.g. Blade 98 16x19 V7–V10) link to a comparison of the whole line, oldest first, and you can hide older generations. Special editions (e.g. RF 01 Laver Cup, Hall of Fame) join their base model's line.
 - Find similar: rank rackets by how close they are to one racket on head size, weight, balance, swing weight and stiffness. The spec bars mark the reference racket's value, and the map numbers the 5 closest and draws spokes to them.
 - Full-screen photo viewer with zoom and pan. For a racket with other generations, ← and → step through them.
+- Customize: add lead tape or grip weight (grams at a position, with quick spots for handle, throat, 3 & 9 and 12 o'clock) and see the new weight, balance and swing weight, plus the stock rackets closest to the build. These are point-mass estimates from the racket's published specs. Open it from the photo viewer or a compare column.
 - Compare rackets side by side. A spec profile above the table shows where each racket sits among all rackets on the five main specs. When you compare generations of one line, small charts also show how each spec changed by year.
-- Every view is a shareable link: the browse filters, sort and view live in the URL hash, and so does a comparison (`#compare=<id>,<id>`). An open photo adds `zoom=<id>` (e.g. `#compare=a,b&zoom=a`), and Back closes it.
+- Every view is a shareable link: the browse filters, sort and view live in the URL hash, and so does a comparison (`#compare=<id>,<id>`) or a customized racket (`#custom=<id>&add=4@51.5,3@5`, grams@cm from the butt cap). An open photo adds `zoom=<id>` (e.g. `#compare=a,b&zoom=a`), and Back closes it.
 
 ## View it
 No build step. Open `docs/index.html` in a browser, or serve the folder:

@@ -5,7 +5,8 @@ Static site for browsing and comparing tennis rackets. See README.md for the lay
 ## Conventions
 - To add rackets, use the `add-racket` skill (`.claude/skills/add-racket/SKILL.md`).
 - Browse state (search, filters, sort, view, map axes, similar reference) lives in the URL hash. A new browse control must be read in `readBrowseHash()` and written in `writeBrowseHash()` in `docs/app.js`.
-- The open photo is `zoom=<id>`, layered on top of the browse or compare hash. Any code that rewrites the hash must keep it with `keepZoom()`.
+- Pages other than browse have their own hash, read in `readHash()`: `compare=<ids>` and `custom=<id>&add=<g>@<cm>,…`.
+- The open photo is `zoom=<id>`, layered on top of the browse, compare or custom hash. Any code that rewrites the hash must keep it with `keepZoom()`.
 - `docs/` is the site root (wwwroot). There is no build step and there are no dependencies. Keep `docs/data/rackets.js` a plain `window.RACKETS = [...]` script so `file://` works.
 - One object per racket in `rackets.js`, grouped by brand, with a source comment on each brand section.
 - **Never guess a spec.** If the source doesn't publish it, use `null`. Note any per-racket source exception in a comment next to that racket.

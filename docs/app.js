@@ -34,7 +34,9 @@
     { key: "stiffness", icon: "biceps-flexed", label: "Stiffness",  unit: " RA", num: r => r.stiffness,
       hint: "Higher = more power, less comfort", extremes: ["Stiffest", "Softest"], delta: (r, a) => signed(r.stiffness - a.stiffness, " RA") },
     { key: "pattern", icon: "grid-3x3", label: "String pattern", hint: "Open (16x19) = more spin; dense (18x20) = more control" },
-    { key: "beam", icon: "triangle-right", label: "Beam",       unit: " mm", hint: "Thicker = more power, less feel" },
+    // num: the widest point ("23/26/23" → 26, "21.5→20.5" → 21.5), for the min/max filter and the compare track.
+    { key: "beam", icon: "triangle-right", label: "Beam",       unit: " mm", hint: "Thicker = more power, less feel",
+      num: r => { const ns = String(r.beam ?? "").match(/\d+(\.\d+)?/g); return ns ? Math.max(...ns.map(Number)) : null; } },
     { key: "length", icon: "ruler", label: "Length",     unit: " in", num: r => r.length, extremes: ["Longest", "Shortest"], delta: (r, a) => signed(r.length - a.length, " in") },
   ];
   const TABLE_GROUPS = [
@@ -56,9 +58,10 @@
   // Min/max filters ("More filters"). Balance filters on the whole pts HL shown on the cards.
   const RANGE_FIELDS = [
     { key: "weight" }, { key: "swingweight" }, { key: "stiffness" }, { key: "balance", unit: "pts HL", round: true },
+    { key: "beam", name: "Beam (widest, mm)" },
   ].map(rf => {
     const f = field(rf.key), unit = rf.unit ?? (f.unit || "").trim();
-    return { ...rf, f, unit, name: f.label + (unit ? ` (${unit})` : "") };
+    return { ...rf, f, unit, name: rf.name || f.label + (unit ? ` (${unit})` : "") };
   });
   const rangeVal = (rf, v) => !has(v) ? null : rf.round ? Math.round(v) : v;
   // "Find similar": distance between two rackets over these specs, each scaled by its spread across all rackets
@@ -211,6 +214,7 @@
     $("zoomTitle").innerHTML = `<span class="brand">${esc(r.brand)}</span>${esc(r.model)}`;
     $("zoomMeta").innerHTML = keySpecs;
     $("zoomSimilar").dataset.similar = r.id;
+    $("zoomCustomize").dataset.customize = r.id;
     const g = lineOf(r);
     $("zoomGens").hidden = !g;
     if (g)$("zoomGens").innerHTML = `<span title="Use ← and → to step through generations">Generations:</span>${g.map(o => `<button type="button" data-zoom="${esc(o.id)}"${
@@ -310,6 +314,14 @@
   [...new Set(data.map(r => r.brand))].sort().forEach(b => {
     $("brand").insertAdjacentHTML("beforeend", `<option>${esc(b)}</option>`);
   });
+  // Pattern and length menus ("More filters"): every value on the site, with how many rackets have it.
+  const countBy = key => data.reduce((m, r) => has(r[key]) ? m.set(r[key], (m.get(r[key]) || 0) + 1) : m, new Map());
+  [...countBy("pattern")].sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true })).forEach(([v, n]) => {
+    $("pattern").insertAdjacentHTML("beforeend", `<option value="${esc(v)}">${esc(v)} (${n})</option>`);
+  });
+  [...countBy("length")].sort((a, b) => a[0] - b[0]).forEach(([v, n]) => {
+    $("length").insertAdjacentHTML("beforeend", `<option value="${v}">${v} in (${n})</option>`);
+  });
 
   // Each min/max filter is a two-handle slider over every racket's range. A handle at its end of the track
   // means "no limit" on that side, so rackets past the current extremes (and future ones) aren't cut off.
@@ -408,12 +420,15 @@
     const sort = $("sort").value;
     const ref = similarId ? byId.get(similarId) : null;
     const latest = $("latestOnly").checked;
+    const pattern = $("pattern").value, length = $("length").value;
     let hiddenNoSpec = 0;
     let list = data.filter(r => {
       if (brand && r.brand !== brand) return false;
       const text = `${r.brand} ${r.model}`.toLowerCase();
       if (!words.every(w => text.includes(w))) return false; // every word, any order
       if (latest && !isLatest(r)) return false;
+      if (pattern && r.pattern !== pattern) return false;
+      if (length && r.length !== +length) return false;
       if (head) {
         const [lo, hi] = head.split("-").map(Number);
         if (r.headSize < lo || r.headSize > hi) return false;
@@ -457,7 +472,7 @@
 
   // Spec bar on cards and list rows: where this racket sits between the lowest and highest on the site.
   // In similar mode a hollow tick marks the reference racket's value on the same bar.
-  const pctOf = (f, v) => { const [lo, hi] = ranges[f.key]; return (100 * (v - lo)) / (hi - lo); };
+  const pctOf = (f, v) => { const [lo, hi] = ranges[f.key]; return Math.max(0, Math.min(100, (100 * (v - lo)) / (hi - lo))); }; // a customized build can pass the ends
   const miniBar = (f, r, ref) => {
     if (!f.num || !has(f.num(r))) return "";
     const [lo, hi] = ranges[f.key];
@@ -472,7 +487,7 @@
     const list = ref ? [ref, ...found] : found;
     $("count").textContent = `${found.length} of ${data.length} rackets` + (ref ? " + reference" : "") +
       (hiddenNoSpec ? ` (${hiddenNoSpec} hidden: spec not published)` : "") + (view === "map" ? " · Click a dot to compare" : view === "lines" ? " · Click a line to compare" : " · Click a photo to compare");
-    const nMore = active.length + $("latestOnly").checked;
+    const nMore = active.length + $("latestOnly").checked + !!$("pattern").value + !!$("length").value;
     $("moreCount").textContent = nMore ? ` (${nMore})` : "";
     RANGE_FIELDS.forEach(paintRange);
     const preset = presetOn(active);
@@ -775,7 +790,7 @@
     $("compareTitle").textContent = sameLine ? `Generations of ${a.brand} ${a.line}` : "Compare";
     const head = `<thead><tr><th class="corner"><span class="muted">Specs</span></th>${rs.map((r, i) =>
       `<th>${picBox(r, "small")}<span class="letter">${LETTERS[i]}</span><span class="brand">${esc(r.brand)}</span><span class="model">${esc(r.model)}</span>${
-        sameLine && has(r.year) ? `<span class="year">${r.year}</span>` : ""}<button class="remove" data-remove="${esc(r.id)}" aria-label="Remove ${esc(r.brand + " " + r.model)}">×</button></th>`
+        sameLine && has(r.year) ? `<span class="year">${r.year}</span>` : ""}<button type="button" class="customize-link" data-customize="${esc(r.id)}">Customize</button><button class="remove" data-remove="${esc(r.id)}" aria-label="Remove ${esc(r.brand + " " + r.model)}">×</button></th>`
     ).join("")}</tr></thead>`;
 
     const row = f => {
@@ -926,6 +941,102 @@
       <div class="trends" style="--cols:${colsN}">${charts}</div>`;
   }
 
+
+  // ---------- Customize (lead tape / grip weight) ----------
+  // #custom=<id>&add=3@67.5,2@5: grams @ cm from the butt cap. Point-mass estimates on the racket's own specs:
+  //   weight' = W + Σm · balance' = (W·B + Σ m·d) / weight' · swing weight' = SW + Σ m·(d − 10)² / 1000
+  // (swing weight is taken about an axis 10 cm from the butt, in kg·cm²). Weight and balance stay unstrung and swing
+  // weight strung: added mass shifts each by the same amount either way. An unpublished spec stays unpublished.
+  const ADD_MAX = 4, GRAMS_MAX = 50;
+  let customId = null, adds = [];
+  const lengthCm = r => r.length * 2.54;
+  const half = v => Math.round(v * 2) / 2;
+  // Quick positions on the frame: rough spots, labelled as such (the exact spot differs by frame).
+  const spots = r => {
+    const L = lengthCm(r);
+    return [["Handle", 5], ["Throat", half(L / 2)], ["3 & 9", half(L - 17)], ["12 o'clock", half(L - 1)]];
+  };
+  const swAdd = a => (a.g * (a.d - 10) ** 2) / 1000;
+  function buildOf(r) {
+    const m = adds.reduce((t, a) => t + a.g, 0);
+    const weight = has(r.weight) ? r.weight + m : null;
+    const balance = has(r.weight) && has(r.balance) ? (r.weight * r.balance + adds.reduce((t, a) => t + a.g * a.d, 0)) / weight : null;
+    const swingweight = has(r.swingweight) ? +(r.swingweight + adds.reduce((t, a) => t + swAdd(a), 0)).toFixed(1) : null;
+    return { ...r, id: "build", model: r.model + " (customized)", weight: has(weight) ? +weight.toFixed(1) : null, balance, swingweight };
+  }
+  function readCustomHash(id) {
+    const r = byId.get(id), L = lengthCm(r);
+    const p = new URLSearchParams(location.hash.slice(1));
+    const raw = p.get("add");
+    adds = raw === null ? [{ g: 4, d: spots(r)[2][1] }] // no add= at all: a starting point, 4 g at 3 & 9
+      : raw.split(",").map(s => s.split("@").map(Number))
+        .filter(([g, d]) => g > 0 && g <= GRAMS_MAX && d >= 0 && d <= L).slice(0, ADD_MAX).map(([g, d]) => ({ g, d }));
+    customId = id;
+  }
+  function writeCustomHash() {
+    const h = "#custom=" + encodeURIComponent(customId) + (adds.length ? "&add=" + adds.map(a => `${a.g}@${a.d}`).join(",") : "");
+    const url = keepZoom(h);
+    if (location.hash !== url) history.replaceState(null, "", url);
+  }
+  function openCustom(id) {
+    closeZoomQuiet();
+    location.hash = "custom=" + encodeURIComponent(id);
+    window.scrollTo(0, 0);
+  }
+  // Full render: the editor rows too (on load, add/remove, picks). Typing only calls updateCustom, so focus stays put.
+  function renderCustom() {
+    const r = byId.get(customId), L = lengthCm(r);
+    $("customTitle").textContent = `Customize ${r.brand} ${r.model}`;
+    $("customPic").innerHTML = picBox(r, "small");
+    $("customAdds").innerHTML = adds.map((a, i) => `<div class="add-row" data-i="${i}">
+        <label class="add-g">Grams <input type="number" min="0.5" max="${GRAMS_MAX}" step="0.5" value="${a.g}" data-k="g"></label>
+        <label class="add-d"><span>Position <output data-out="d"></output></span>
+          <input type="range" min="0" max="${half(L)}" step="0.5" value="${a.d}" data-k="d" aria-label="Position, cm from the butt cap"></label>
+        <div class="add-spots" role="group" aria-label="Quick positions">${spots(r).map(([name, d]) =>
+          `<button type="button" data-spot="${d}" title="About ${d} cm from the butt cap">${esc(name)}</button>`).join("")}</div>
+        <span class="add-sw muted" data-out="sw"></span>
+        <button type="button" class="remove" data-del="${i}" aria-label="Remove this weight">×</button>
+      </div>`).join("") || `<p class="muted">No weight added: these are the stock specs.</p>`;
+    $("customAdd").disabled = adds.length >= ADD_MAX;
+    updateCustom();
+  }
+  function updateCustom() {
+    const r = byId.get(customId), b = buildOf(r);
+    $("customAdds").querySelectorAll(".add-row").forEach(row => {
+      const a = adds[+row.dataset.i];
+      row.querySelector('[data-out="d"]').textContent = `${a.d} cm`;
+      row.querySelector('[data-out="sw"]').textContent = has(r.swingweight) ? `+${swAdd(a).toFixed(1)} SW` : "";
+      row.querySelectorAll("[data-spot]").forEach(s => s.setAttribute("aria-pressed", +s.dataset.spot === a.d));
+    });
+    const rows = ["weight", "balance", "swingweight"].map(field).map(f => {
+      const sub = x => f.sub ? f.sub(x) : "";
+      let change = "";
+      if (has(f.num(r)) && has(f.num(b))) {
+        change = f.delta(b, r);
+        if (f.key === "balance") change = [change, Math.abs(b.balance - r.balance) >= 0.05 ? signed(b.balance - r.balance, " cm") : ""].filter(Boolean).join(", ");
+        if (f.key === "swingweight" || f.key === "weight") change = b[f.key] === r[f.key] ? "" : change;
+      }
+      return `<tr><th scope="row">${icon(f.icon)}${f.label}<span class="hint">${esc(f.hint.split(".")[0])}</span></th>
+        <td><div class="val">${esc(f.fmt(r))}</div>${sub(r) ? `<div class="sub">${esc(sub(r))}</div>` : ""}</td>
+        <td><div class="val">${esc(f.fmt(b))}</div>${sub(b) ? `<div class="sub">${esc(sub(b))}</div>` : ""}${miniBar(f, b, r)}</td>
+        <td class="delta">${esc(change || (has(f.num(r)) ? "same" : "not published"))}</td></tr>`;
+    }).join("");
+    $("customResult").innerHTML = `<table class="custom-table"><thead><tr><th class="corner"></th><th>Stock</th><th>Customized</th><th>Change</th></tr></thead><tbody>${rows}</tbody></table>`;
+
+    // Closest stock rackets to the build, on the five "Find similar" specs.
+    const full = selected.length >= MAX;
+    const near = data.filter(o => o !== r).map(o => [o, distance(b, o)]).filter(([, d]) => isFinite(d))
+      .sort((x, y) => x[1] - y[1]).slice(0, NEAR_N).map(([o]) => o);
+    const fields = FIELDS.filter(f => CARD_FIELDS.includes(f.key));
+    $("customNear").innerHTML = near.map(o => `<article class="row${selected.includes(o.id) ? " selected" : ""}">
+        ${browsePic(o, "small", selected.includes(o.id), full)}
+        <div class="name"><div class="brand">${esc(o.brand)}</div><h3>${esc(o.model)}</h3><div class="sim">${esc(simDiff(o, b))} vs your build</div>
+          <button type="button" class="gen-link" data-pair="${esc(r.id)},${esc(o.id)}">Compare with the stock ${esc(r.model)}</button></div>
+        <div class="row-specs">${fields.map(f => `<div class="spec" data-label="${esc(f.label)}">${esc(f.fmt(o))}${miniBar(f, o, b)}</div>`).join("")}</div>
+      </article>`).join("") || `<p class="muted">Not enough published specs to compare.</p>`;
+    writeCustomHash();
+  }
+
   // ---------- Routing ----------
   // #compare=id1,id2 shows the compare table. Any other hash is the browse view's state
   // (#q=…&brand=…&sort=…&weight=290~310…), kept up to date as you filter, so a browse link is shareable too.
@@ -940,6 +1051,8 @@
     setSelect("sort", p.get("sort") || "brand");
     similarId = byId.has(p.get("similar")) ? p.get("similar") : null;
     $("latestOnly").checked = p.get("latest") === "1";
+    setSelect("pattern", p.get("pattern") || "");
+    setSelect("length", p.get("length") || "");
     sortDir = p.get("dir") === "desc" ? -1 : 1;
     const v = p.get("view");
     if (VIEWS.includes(v)) view = v;
@@ -951,7 +1064,7 @@
       const [lo = "", hi = ""] = (p.get(rf.key) || "").split("~");
       setRange(rf, lo === "" ? null : +lo, hi === "" ? null : +hi);
     });
-    if (activeRanges().length || $("latestOnly").checked) $("more").open = true;
+    if (activeRanges().length || $("latestOnly").checked || $("pattern").value || $("length").value) $("more").open = true;
   }
 
   function writeBrowseHash(active) {
@@ -961,6 +1074,8 @@
     if ($("brand").value) p.set("brand", $("brand").value);
     if ($("head").value) p.set("head", $("head").value);
     if ($("latestOnly").checked) p.set("latest", "1");
+    if ($("pattern").value) p.set("pattern", $("pattern").value);
+    if ($("length").value) p.set("length", $("length").value);
     if (similarId) p.set("similar", similarId);
     else {
       if (sort !== "brand") p.set("sort", sort);
@@ -1008,15 +1123,19 @@
   }
 
   function readHash() {
+    const c = location.hash.match(/^#custom=([^&]*)/), cid = c && decodeURIComponent(c[1]);
+    const showCustom = !!c && byId.has(cid);
+    if (showCustom) readCustomHash(cid);
     const m = location.hash.match(/^#compare=([^&]*)/);
     if (m) selected = [...new Set(m[1].split(",").map(decodeURIComponent))].filter(id => byId.has(id)).slice(0, MAX);
     const showCompare = !!m && selected.length >= 2;
     if (showCompare) { // rewrite the URL to what's actually shown (deduped, unknown ids dropped, max 4)
       const canon = keepZoom("#compare=" + selected.map(encodeURIComponent).join(","));
       if (location.hash !== canon) history.replaceState(null, "", canon);
-    } else if (!m) readBrowseHash();
+    } else if (!m && !showCustom) readBrowseHash();
+    $("custom").hidden = !showCustom;
     $("compare").hidden = !showCompare;
-    $("browse").hidden = showCompare;
+    $("browse").hidden = showCompare || showCustom;
     render();
     syncZoom();
   }
@@ -1036,12 +1155,13 @@
   }
 
   function render() {
-    if ($("compare").hidden) renderGrid(); else renderTable();
+    if (!$("custom").hidden) renderCustom();
+    else if ($("compare").hidden) renderGrid(); else renderTable();
     renderTray();
   }
 
   // ---------- Events ----------
-  ["q", "brand", "head"].forEach(id => $(id).addEventListener("input", renderGrid));
+  ["q", "brand", "head", "pattern", "length"].forEach(id => $(id).addEventListener("input", renderGrid));
   $("rangeInputs").addEventListener("input", e => {
     const [end, key] = e.target.id.split("-"); // handles can't cross: the one being dragged stops at the other
     const other = $((end === "min" ? "max-" : "min-") + key);
@@ -1056,6 +1176,7 @@
   $("resetRanges").addEventListener("click", () => {
     RANGE_FIELDS.forEach(rf => setRange(rf, null, null));
     $("latestOnly").checked = false;
+    $("pattern").value = $("length").value = "";
     renderGrid();
   });
   $("sort").addEventListener("input", () => { sortDir = 1; similarId = null; renderGrid(); });
@@ -1072,6 +1193,8 @@
     if (s) showSimilar(s.dataset.similar);
     const gen = e.target.closest("[data-generations]");
     if (gen) compareGenerations(gen.dataset.generations);
+    const cu = e.target.closest("[data-customize]");
+    if (cu) openCustom(cu.dataset.customize);
   });
   document.addEventListener("keydown", e => {
     const p = e.target.closest && e.target.closest("[data-zoom]");
@@ -1159,6 +1282,41 @@
   }
   ["copyLink", "copyBrowse"].forEach(id => $(id).addEventListener("click", () => copyHref($(id))));
   $("back").addEventListener("click", goBrowse);
+  $("customBack").addEventListener("click", goBrowse);
+  $("copyCustom").addEventListener("click", () => copyHref($("copyCustom")));
+  $("customAdd").addEventListener("click", () => {
+    if (adds.length >= ADD_MAX) return;
+    adds.push({ g: 2, d: spots(byId.get(customId))[3][1] });
+    renderCustom();
+    $("customAdds").querySelector(".add-row:last-child input")?.focus();
+  });
+  $("customAdds").addEventListener("input", e => {
+    const row = e.target.closest(".add-row"), k = e.target.dataset.k;
+    if (!row || !k) return;
+    const v = +e.target.value;
+    if (k === "g" && !(v > 0 && v <= GRAMS_MAX)) return; // keep the last good value while typing
+    adds[+row.dataset.i][k] = v;
+    updateCustom();
+  });
+  $("customAdds").addEventListener("click", e => {
+    const spot = e.target.closest("[data-spot]"), del = e.target.closest("[data-del]");
+    if (spot) {
+      const row = spot.closest(".add-row");
+      adds[+row.dataset.i].d = +spot.dataset.spot;
+      row.querySelector('[data-k="d"]').value = spot.dataset.spot;
+      updateCustom();
+    } else if (del) {
+      adds.splice(+del.dataset.del, 1);
+      renderCustom();
+      $("customAdd").focus();
+    }
+  });
+  $("customNear").addEventListener("click", e => {
+    const pair = e.target.closest("[data-pair]");
+    if (pair) { location.hash = "compare=" + pair.dataset.pair.split(",").map(encodeURIComponent).join(","); window.scrollTo(0, 0); return; }
+    const b = e.target.closest("button[data-id]");
+    if (b) toggle(b.dataset.id);
+  });
   $("diffOnly").addEventListener("change", renderTable);
   // "Compact" hides photos, hints and extras so the table fits on one screen. Remembered per browser.
   const setDataOnly = on => { $("dataOnly").checked = on; $("compare").classList.toggle("data-only", on); };

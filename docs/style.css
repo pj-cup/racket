@@ -554,7 +554,9 @@ tr.same td .val, tr.same td .delta { color: var(--muted); font-weight: 400; }
 .add-row label > span { display: flex; justify-content: space-between; gap: 8px; }
 .add-row output { color: var(--text); font-variant-numeric: tabular-nums; }
 .add-g input { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 8px; width: 100%; box-sizing: border-box; }
-.add-d input { width: 100%; accent-color: var(--accent); }
+/* The photo lies head-left, so the slider runs the same way: tip on the left, butt cap (0 cm) on the right. */
+.add-d input { width: 100%; accent-color: var(--accent); direction: rtl; }
+.add-ends { display: flex; justify-content: space-between; font-size: 0.75rem; }
 .add-spots { display: flex; flex-wrap: wrap; gap: 4px; }
 .add-spots button {
   font: inherit; font-size: 0.8rem; cursor: pointer; border-radius: 999px; padding: 3px 10px;

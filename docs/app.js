@@ -957,10 +957,12 @@
     return [["Handle", 5], ["Throat", half(L / 2)], ["3 & 9", half(L - 17)], ["12 o'clock", half(L - 1)]];
   };
   const swAdd = a => (a.g * (a.d - 10) ** 2) / 1000;
+  // Negative grams = weight taken off (e.g. a slimmer, lighter grip at the handle).
+  const validG = g => g !== 0 && Math.abs(g) <= GRAMS_MAX;
   function buildOf(r) {
     const m = adds.reduce((t, a) => t + a.g, 0);
-    const weight = has(r.weight) ? r.weight + m : null;
-    const balance = has(r.weight) && has(r.balance) ? (r.weight * r.balance + adds.reduce((t, a) => t + a.g * a.d, 0)) / weight : null;
+    const weight = has(r.weight) && r.weight + m > 0 ? r.weight + m : null;
+    const balance = has(weight) && has(r.balance) ? (r.weight * r.balance + adds.reduce((t, a) => t + a.g * a.d, 0)) / weight : null;
     const swingweight = has(r.swingweight) ? +(r.swingweight + adds.reduce((t, a) => t + swAdd(a), 0)).toFixed(1) : null;
     return { ...r, id: "build", model: r.model + " (customized)", weight: has(weight) ? +weight.toFixed(1) : null, balance, swingweight };
   }
@@ -970,7 +972,7 @@
     const raw = p.get("add");
     adds = raw === null ? [{ g: 4, d: spots(r)[2][1] }] // no add= at all: a starting point, 4 g at 3 & 9
       : raw.split(",").map(s => s.split("@").map(Number))
-        .filter(([g, d]) => g > 0 && g <= GRAMS_MAX && d >= 0 && d <= L).slice(0, ADD_MAX).map(([g, d]) => ({ g, d }));
+        .filter(([g, d]) => validG(g) && d >= 0 && d <= L).slice(0, ADD_MAX).map(([g, d]) => ({ g, d }));
     customId = id;
   }
   function writeCustomHash() {
@@ -989,10 +991,11 @@
     $("customTitle").textContent = `Customize ${r.brand} ${r.model}`;
     $("customPic").innerHTML = picBox(r, "small");
     $("customAdds").innerHTML = adds.map((a, i) => `<div class="add-row" data-i="${i}">
-        <label class="add-g">Grams <input type="number" min="0.5" max="${GRAMS_MAX}" step="0.5" value="${a.g}" data-k="g"></label>
+        <label class="add-g">Grams <input type="number" min="-${GRAMS_MAX}" max="${GRAMS_MAX}" step="0.5" value="${a.g}" data-k="g" title="Negative = weight removed"></label>
         <label class="add-d"><span>Position <output data-out="d"></output></span>
-          <input type="range" min="0" max="${half(L)}" step="0.5" value="${a.d}" data-k="d" aria-label="Position, cm from the butt cap"></label>
-        <div class="add-spots" role="group" aria-label="Quick positions">${spots(r).map(([name, d]) =>
+          <input type="range" min="0" max="${half(L)}" step="0.5" value="${a.d}" data-k="d" aria-label="Position, cm from the butt cap">
+          <span class="add-ends" aria-hidden="true"><span>Head</span><span>Butt cap</span></span></label>
+        <div class="add-spots" role="group" aria-label="Quick positions">${spots(r).slice().reverse().map(([name, d]) =>
           `<button type="button" data-spot="${d}" title="About ${d} cm from the butt cap">${esc(name)}</button>`).join("")}</div>
         <span class="add-sw muted" data-out="sw"></span>
         <button type="button" class="remove" data-del="${i}" aria-label="Remove this weight">×</button>
@@ -1005,7 +1008,7 @@
     $("customAdds").querySelectorAll(".add-row").forEach(row => {
       const a = adds[+row.dataset.i];
       row.querySelector('[data-out="d"]').textContent = `${a.d} cm`;
-      row.querySelector('[data-out="sw"]').textContent = has(r.swingweight) ? `+${swAdd(a).toFixed(1)} SW` : "";
+      row.querySelector('[data-out="sw"]').textContent = has(r.swingweight) ? signed(swAdd(a), " SW") : "";
       row.querySelectorAll("[data-spot]").forEach(s => s.setAttribute("aria-pressed", +s.dataset.spot === a.d));
     });
     const rows = ["weight", "balance", "swingweight"].map(field).map(f => {
@@ -1294,7 +1297,7 @@
     const row = e.target.closest(".add-row"), k = e.target.dataset.k;
     if (!row || !k) return;
     const v = +e.target.value;
-    if (k === "g" && !(v > 0 && v <= GRAMS_MAX)) return; // keep the last good value while typing
+    if (k === "g" && !validG(v)) return; // keep the last good value while typing
     adds[+row.dataset.i][k] = v;
     updateCustom();
   });

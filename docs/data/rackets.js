@@ -369,14 +369,26 @@ window.RACKETS = [
     image: "img/head-prestige-pro-2023.webp" },
 
   // ---- Yonex (yonex.com spec sheets; photos from Tennis Warehouse) ----
-  { id: "yonex-ezone-98-8th", brand: "Yonex", model: "EZONE 98 (8th gen)",
+  { id: "yonex-ezone-98-8th", brand: "Yonex", model: "EZONE 98 (8th gen)", line: "EZONE 98", year: 2025,
+    // year: Tennis Warehouse lists the 8th gen as "EZONE 98 2025"
     headSize: 98, weight: 305, balance: 31.5, swingweight: 320, swingweightType: "strung", stiffness: 63, beam: "23.8/24.5/19.5", length: 27, pattern: "16x19",
     colors: ["#1d4fb8", "#f2f2f2"],
     image: "img/yonex-ezone-98-8th.webp" },
-  { id: "yonex-ezone-100-8th", brand: "Yonex", model: "EZONE 100 (8th gen)",
+  { id: "yonex-ezone-98-espresso-brown-2026", brand: "Yonex", model: "EZONE 98 Espresso Brown", line: "EZONE 98", year: 2026,
+    // brown cosmetic of the 8th gen (yonex.com lists Espresso Brown as a colour of 08EZ98); year: retailers give a 21 August 2026 launch
+    headSize: 98, weight: 305, balance: 31.5, swingweight: 320, swingweightType: "strung", stiffness: 63, beam: "23.8/24.5/19.5", length: 27, pattern: "16x19",
+    colors: ["#3f2e24", "#d9722f"],
+    image: "img/yonex-ezone-98-espresso-brown-2026.webp" },
+  { id: "yonex-ezone-100-8th", brand: "Yonex", model: "EZONE 100 (8th gen)", line: "EZONE 100", year: 2025,
+    // year: Tennis Warehouse lists the 8th gen as "EZONE 100 2025"
     headSize: 100, weight: 300, balance: 32.0, swingweight: 315, swingweightType: "strung", stiffness: 68, beam: "24.5/26.5/23", length: 27, pattern: "16x19",
     colors: ["#1f4fc4", "#f2f2f2"],
     image: "img/yonex-ezone-100-8th.webp" },
+  { id: "yonex-ezone-100-espresso-brown-2026", brand: "Yonex", model: "EZONE 100 Espresso Brown", line: "EZONE 100", year: 2026,
+    // brown cosmetic of the 8th gen (yonex.com lists Espresso Brown as a colour of 08EZ100); year: retailers give a 21 August 2026 launch
+    headSize: 100, weight: 300, balance: 32.0, swingweight: 315, swingweightType: "strung", stiffness: 68, beam: "24.5/26.5/23", length: 27, pattern: "16x19",
+    colors: ["#3f2e24", "#d9722f"],
+    image: "img/yonex-ezone-100-espresso-brown-2026.webp" },
   { id: "yonex-vcore-98-8th", brand: "Yonex", model: "VCORE 98 (8th gen)",
     headSize: 98, weight: 305, balance: 31.5, swingweight: 321, swingweightType: "strung", stiffness: 63, beam: "23/23.5/22", length: 27, pattern: "16x19",
     colors: ["#b3122e", "#1a1a1a"],
@@ -389,10 +401,17 @@ window.RACKETS = [
     headSize: 100, weight: 300, balance: 32.0, swingweight: 318, swingweightType: "strung", stiffness: 66, beam: "23/23/23", length: 27, pattern: "16x19",
     colors: ["#5b6b3a", "#1a1a1a"],
     image: "img/yonex-percept-100.jpg" },
-  { id: "yonex-ezone-98-tour-8th", brand: "Yonex", model: "EZONE 98 Tour (8th gen)",
+  { id: "yonex-ezone-98-tour-8th", brand: "Yonex", model: "EZONE 98 Tour (8th gen)", line: "EZONE 98 Tour", year: 2025,
+    // year: Tennis Warehouse lists the 8th gen as "EZONE 98 Tour (2025)"
     headSize: 98, weight: 315, balance: 32.0, swingweight: 335, swingweightType: "strung", stiffness: 62, beam: "23.8/24.5/19.5", length: 27, pattern: "16x19",
     colors: ["#1d4fb8", "#f2f2f2"],
     image: "img/yonex-ezone-98-tour-8th.webp" },
+  { id: "yonex-ezone-98-tour-espresso-brown-2026", brand: "Yonex", model: "EZONE 98 Tour Espresso Brown", line: "EZONE 98 Tour", year: 2026,
+    // brown cosmetic of the 8th gen (yonex.com lists Espresso Brown as a colour of 08EZ98TR); year: retailers give a 21 August 2026 launch
+    // TW measures swingweight 334 / stiffness 63 here vs 335 / 62 on the standard cosmetic; TW's stock number (LEZ08100EB) doesn't match, so matched on name and specs
+    headSize: 98, weight: 315, balance: 32.0, swingweight: 334, swingweightType: "strung", stiffness: 63, beam: "23.8/24.5/19.5", length: 27, pattern: "16x19",
+    colors: ["#3f2e24", "#d9722f"],
+    image: "img/yonex-ezone-98-tour-espresso-brown-2026.webp" },
   { id: "yonex-vcore-95-8th", brand: "Yonex", model: "VCORE 95 (8th gen)",
     headSize: 95, weight: 310, balance: 31.0, swingweight: 323, swingweightType: "strung", stiffness: 62, beam: "22/22/22", length: 27, pattern: "16x20",
     colors: ["#b3122e", "#1a1a1a"],

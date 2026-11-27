@@ -331,11 +331,17 @@ window.RACKETS = [
     headSize: 100, weight: 295, balance: 29.5, swingweight: 291, swingweightType: "strung", stiffness: 60, beam: "23/25/24", length: 27, pattern: "16x18",
     colors: ["#b8bcc2", "#1a1a1a"],
     image: "img/head-squared.webp" },
-  { id: "head-boom-mp-2026", brand: "Head", model: "Boom MP 2026",
+  { id: "head-boom-mp-2026", brand: "Head", model: "Boom MP 2026", line: "Boom MP", year: 2026,
     // unstrung weight/balance/beam from Head's spec via retailer listings (head.com blocks automated access)
     headSize: 100, weight: 295, balance: 31.5, swingweight: 316, swingweightType: "strung", stiffness: 61, beam: "24", length: 27, pattern: "16x19",
     colors: ["#e8644a", "#1a1a1a"],
     image: "img/head-boom-mp-2026.webp" },
+  { id: "head-boom-mp-2026-purple", brand: "Head", model: "Boom MP 2026 Purple", line: "Boom MP", year: 2026,
+    // Coco Gauff's purple cosmetic of the Boom MP 2026 (Head 232406, TW HBOMPA); same frame and TW specs as the coral version.
+    // unstrung weight/balance/beam from Head's spec via retailer listings (Merchant of Tennis, TW Europe; head.com blocks automated access)
+    headSize: 100, weight: 295, balance: 31.5, swingweight: 316, swingweightType: "strung", stiffness: 61, beam: "24", length: 27, pattern: "16x19",
+    colors: ["#5b2a86", "#1a1a1a"],
+    image: "img/head-boom-mp-2026-purple.webp" },
   { id: "head-speed-pro-2026", brand: "Head", model: "Speed Pro 2026",
     // unstrung weight/balance and beam from Head's spec via retailer listings (head.com blocks automated access)
     headSize: 100, weight: 310, balance: 31.0, swingweight: 328, swingweightType: "strung", stiffness: 61, beam: "23", length: 27, pattern: "18x20",

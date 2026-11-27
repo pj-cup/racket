@@ -283,6 +283,12 @@ window.RACKETS = [
     headSize: 100, weight: 315, balance: 31.0, swingweight: 322, swingweightType: "strung", stiffness: 66, beam: "21.5", length: 27, pattern: "16x19",
     colors: ["#2a2420", "#1a1a1a"],
     image: "img/wilson-pro-staff-x-v14.jpg" },
+  { id: "wilson-ncode-nsix-one-95-2004", brand: "Wilson", model: "nCode nSix-One 95 (2004)",
+    // year: Tennis Warehouse review date (WN6195review, July 2004). Head size, length, pattern, beam (22 mm straight), swingweight and
+    // flex from that review. No online source publishes Wilson's unstrung spec (TW's 346 g / 31 cm is strung), so the unstrung
+    // weight (310 g) and balance (31.5 cm) were supplied by the user. No Tennis Warehouse photo exists; colors not sourced.
+    headSize: 95, weight: 310, balance: 31.5, swingweight: 330, swingweightType: "strung", stiffness: 65, beam: "22", length: 27, pattern: "16x18",
+    colors: ["#1a1a1a", "#1a1a1a"] },
   { id: "wilson-clash-100l-v3", brand: "Wilson", model: "Clash 100L V3",
     // unstrung weight/balance from retailer listings of Wilson's spec (wilson.com blocks automated access); beam from Tennis Warehouse
     headSize: 100, weight: 280, balance: 31.5, swingweight: 301, swingweightType: "strung", stiffness: 54, beam: "24.5", length: 27, pattern: "16x19",
